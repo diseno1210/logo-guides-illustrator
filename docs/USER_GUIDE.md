@@ -1,6 +1,6 @@
 # 使用说明
 
-当前为M6开发构建，自动验证通过，等待[第14.5节 Illustrator 实测](acceptance/M6.md)。M0–M5已满足各自里程碑门槛；M1/M2有真实导出/绘制证据。尚未发布v0.1，CEP面板、AI与ZXP未实现。
+当前为M6开发构建，自动验证通过，原生验收部分完成，等待[第14.5节画布拖动实测](acceptance/M6.md)。M0–M5已满足各自里程碑门槛；M1/M2有真实导出/绘制证据。尚未发布v0.1，CEP面板、AI与ZXP未实现。
 
 ## 安装与运行
 
@@ -137,6 +137,8 @@ $galleryUrl = ([Uri](Resolve-Path 'dist/validation/m6/gallery.html').Path).Absol
 确认PNG已写入后再查看。复杂真实样本可能超过默认四条车道，输出LABEL_LANES_FULL且末车道允许重叠；可手动调整标签或编辑advanced.maxLanes。算法不会宣称所有任意Logo均无重叠。
 
 ## Git与后续阶段
+
+Illustrator 30.0.0已完成RGB/CMYK原生DOM检查、中文设置窗口生成及单次撤销验证；Clear删除图层后的失效引用已修复。2000锚点真实生成实测约99.6秒，超过目标，当前脚本版不承诺15秒内完成，M7面板计算迁移时优化。原生参考线已生成，但画布拖动吸附及Alt复制行为仍待本次验收；详细证据见[M6验收页](acceptance/M6.md)。
 
 仓库是本地main，无远程、无推送，dist和node_modules不入Git。用户可在自己的空仓库地址确定后自行执行：
 

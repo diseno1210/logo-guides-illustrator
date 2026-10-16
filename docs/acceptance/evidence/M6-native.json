@@ -1,0 +1,310 @@
+{
+  "environment": {
+    "illustrator": "30.0.0",
+    "os": "Windows/64 10.0  "
+  },
+  "nativeChecks": [
+    {
+      "name": "RGB generate native grouped compound live text",
+      "status": "pass",
+      "detail": {
+        "primitives": 102,
+        "a": {
+          "value": 20,
+          "source": "auto-stem",
+          "locked": true
+        }
+      }
+    },
+    {
+      "name": "RGB layers metadata colors background activeLayer",
+      "status": "pass",
+      "detail": {
+        "colorTypes": {
+          "RGBColor": true
+        },
+        "sublayers": [
+          "LG Labels",
+          "LG Deviation",
+          "LG Angles",
+          "LG Dimensions",
+          "LG Circles",
+          "LG Visual Lines",
+          "LG Baselines",
+          "LG Construction",
+          "LG Legend"
+        ]
+      }
+    },
+    {
+      "name": "RGB native rendered evidence",
+      "status": "pass",
+      "detail": "rgb.ai/.png"
+    },
+    {
+      "name": "RGB anchor edit partial-selection refresh locked a",
+      "status": "pass",
+      "detail": {
+        "a": 20,
+        "sources": 3,
+        "primitives": 101
+      }
+    },
+    {
+      "name": "RGB selected anchors manual circle refresh preservation",
+      "status": "pass",
+      "detail": {
+        "circle": {
+          "cx": 210,
+          "cy": 240,
+          "r": 32.0044520478476,
+          "maxErr": 0.00445204784788,
+          "rmsErr": 0.00308108164781,
+          "maxErrPoint": [
+            242,
+            240
+          ],
+          "maxErrSigned": -0.00445204784788
+        },
+        "maxAnchorError": 0.00445204784788,
+        "anchorCount": 4,
+        "sampleCount": 636
+      }
+    },
+    {
+      "name": "RGB DOM duplicate tag behavior (not Alt-drag)",
+      "status": "pass",
+      "detail": {
+        "sources": 4,
+        "primitives": 105
+      }
+    },
+    {
+      "name": "RGB SetBaseUnit native object",
+      "status": "pass",
+      "detail": {
+        "a": {
+          "value": 25,
+          "source": "manual",
+          "locked": true
+        }
+      }
+    },
+    {
+      "name": "RGB guides flags and visible labels",
+      "status": "pass",
+      "detail": {
+        "nativeGuides": 62
+      }
+    },
+    {
+      "name": "RGB clear auto all data",
+      "status": "pass",
+      "detail": {
+        "originalItems": 4
+      }
+    },
+    {
+      "name": "CMYK generate native grouped compound live text",
+      "status": "pass",
+      "detail": {
+        "primitives": 102,
+        "a": {
+          "value": 20,
+          "source": "auto-stem",
+          "locked": true
+        }
+      }
+    },
+    {
+      "name": "CMYK layers metadata colors background activeLayer",
+      "status": "pass",
+      "detail": {
+        "colorTypes": {
+          "CMYKColor": true
+        },
+        "sublayers": [
+          "LG Labels",
+          "LG Deviation",
+          "LG Angles",
+          "LG Dimensions",
+          "LG Circles",
+          "LG Visual Lines",
+          "LG Baselines",
+          "LG Construction",
+          "LG Legend"
+        ]
+      }
+    },
+    {
+      "name": "CMYK native rendered evidence",
+      "status": "pass",
+      "detail": "cmyk.ai/.png"
+    },
+    {
+      "name": "CMYK anchor edit partial-selection refresh locked a",
+      "status": "pass",
+      "detail": {
+        "a": 20,
+        "sources": 3,
+        "primitives": 101
+      }
+    },
+    {
+      "name": "CMYK selected anchors manual circle refresh preservation",
+      "status": "pass",
+      "detail": {
+        "circle": {
+          "cx": 210,
+          "cy": 240,
+          "r": 32.0044520478476,
+          "maxErr": 0.00445204784788,
+          "rmsErr": 0.00308108164781,
+          "maxErrPoint": [
+            242,
+            240
+          ],
+          "maxErrSigned": -0.00445204784788
+        },
+        "maxAnchorError": 0.00445204784788,
+        "anchorCount": 4,
+        "sampleCount": 636
+      }
+    },
+    {
+      "name": "CMYK DOM duplicate tag behavior (not Alt-drag)",
+      "status": "pass",
+      "detail": {
+        "sources": 4,
+        "primitives": 105
+      }
+    },
+    {
+      "name": "CMYK SetBaseUnit native object",
+      "status": "pass",
+      "detail": {
+        "a": {
+          "value": 25,
+          "source": "manual",
+          "locked": true
+        }
+      }
+    },
+    {
+      "name": "CMYK guides flags and visible labels",
+      "status": "pass",
+      "detail": {
+        "nativeGuides": 62
+      }
+    },
+    {
+      "name": "CMYK clear auto all data",
+      "status": "pass",
+      "detail": {
+        "originalItems": 4
+      }
+    }
+  ],
+  "limitations": [
+    "ScriptUI choices supplied by probe; no dialog visual verification",
+    "Anchor edit and duplicate use DOM; not Direct Selection or Alt-drag",
+    "Native guide flags checked; snapping not tested",
+    "Undo is a separate UI test"
+  ],
+  "performance": {
+    "name": "2000 anchors native read analyze draw performance",
+    "status": "pass",
+    "detail": {
+      "anchors": 2000,
+      "elapsedMs": 99609,
+      "targetMs": 15000,
+      "targetMet": false,
+      "primitives": 101
+    }
+  },
+  "ui": {
+    "beforeUndo": {
+      "name": "LG_M6_UI.ai",
+      "layers": [
+        {
+          "name": "Logo Guides",
+          "locked": true
+        },
+        {
+          "name": "LG M6 UI source",
+          "locked": false
+        }
+      ],
+      "items": 20,
+      "sourceTags": 2,
+      "selected": 0
+    },
+    "afterUndo": {
+      "name": "LG_M6_UI.ai",
+      "layers": [
+        {
+          "name": "LG M6 UI source",
+          "locked": false
+        }
+      ],
+      "items": 2,
+      "sourceTags": 0,
+      "selected": 2
+    },
+    "beforeAnchorMove": {
+      "anchor": [
+        220,
+        250
+      ],
+      "a": {
+        "value": 20,
+        "source": "auto-stem",
+        "locked": true
+      }
+    },
+    "afterAnchorMove": {
+      "anchor": [
+        220,
+        250
+      ],
+      "data": {
+        "schemaVersion": 1,
+        "runId": "lg_mvaj0cln_sewg",
+        "baseUnit": {
+          "value": 20,
+          "source": "auto-stem",
+          "locked": true
+        },
+        "hiddenFeatures": [],
+        "createdAt": "2026-10-16T13:27:33",
+        "updatedAt": "2026-10-16T13:28:10"
+      },
+      "notices": []
+    },
+    "latestGenerateResult": {
+      "cancelled": false,
+      "notices": [],
+      "data": {
+        "schemaVersion": 1,
+        "runId": "lg_mvaj0cln_sewg",
+        "baseUnit": {
+          "value": 20,
+          "source": "auto-stem",
+          "locked": true
+        },
+        "hiddenFeatures": [],
+        "createdAt": "2026-10-16T13:27:33",
+        "updatedAt": "2026-10-16T13:27:33"
+      }
+    },
+    "note": "Undo snapshots are from the first real UI generation; latestGenerateResult and anchor movement attempt are from the second generation."
+  },
+  "provenance": {
+    "nativeResultsSHA256": "ab5e00abffcaa2f3abe542c7f87fdf54af7fa2ac307ee46983ab552e447ed868",
+    "firstResultsSHA256": "49a9327248989ca5e4cb4b7d2ed538b3b22c6ae49772e64a8ea2aeb88f1a69ba"
+  },
+  "pending": [
+    "Direct Selection drag and snapping",
+    "Alt-drag copy tags and Refresh"
+  ]
+}
