@@ -1,0 +1,19 @@
+{
+  "name": "logo-guides",
+  "version": "0.0.0-dev",
+  "private": true,
+  "description": "Illustrator logo construction guides — M0 toolchain",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "build": "node tools/build.js",
+    "test": "node tools/run_tests.js",
+    "check:es3": "node tools/check_es3.js",
+    "preview": "node tools/preview.js",
+    "fixture": "node tools/run_fixture.js"
+  },
+  "devDependencies": {
+    "@xmldom/xmldom": "0.9.12",
+    "acorn": "8.19.0",
+    "svgpath": "2.6.0"
+  }
+}

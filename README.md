@@ -1,6 +1,6 @@
 # Logo 辅助线生成器
 
-面向 Adobe Illustrator 的 Logo / 字标辅助线工具。当前正在实施 **M0 骨架与工具链**，尚不能生成 Illustrator 辅助线。
+面向 Adobe Illustrator 的 Logo / 字标辅助线工具。**M0 骨架与工具链已验收**，尚不能生成 Illustrator 辅助线；M1 未开始。
 
 ## 开发入口
 

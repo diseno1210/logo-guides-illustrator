@@ -1,6 +1,6 @@
 # 使用说明
 
-当前阶段 M0：仅供开发工具链和 F1 几何预览验收。Illustrator 辅助线生成、刷新、清除、圆拟合、面板与 AI 尚未实现。
+当前阶段 M0 已验收：提供开发工具链和 F1 几何预览。Illustrator 辅助线生成、刷新、清除、圆拟合、面板与 AI 尚未实现。
 
 ## 开发命令
 
@@ -28,6 +28,20 @@ $pnpmPath = 'C:\Users\disen\.cache\codex-runtimes\codex-primary-runtime\dependen
 ```
 
 dist 为可重新生成的输出目录，不入 Git。M0 的 JSX 是阶段提示，不应当作已实现的 Generate 使用。预览也仅画输入几何；辅助图元组暂为空。
+
+SVG 导入支持 path、rect（含圆角）、circle、ellipse、polygon、polyline、line，以及 transform。跳过 lg-guides；不展开文本、use、外部 CSS、剪切或蒙版，相关内容会跳过或警告。非法变换/数值/嵌套 viewport 会报错。viewBox 的数值坐标按 pt 使用；不根据根 width/height 二次缩放。无单位/px 数值按 1pt，显式物理单位换算；与浏览器截图的 CSS px 比例不同，详见 DECISIONS.md D005。
+
+预览检查命令（Chrome 参数路径可按本机调整）：
+
+```powershell
+$previewFile = (Resolve-Path 'dist/previews/F1.svg').Path
+$previewUrl = ([System.Uri]$previewFile).AbsoluteUri
+$previewPng = Join-Path (Get-Location).Path 'dist/previews/F1.png'
+$previewProfile = Join-Path (Get-Location).Path 'dist/chrome-profile'
+& 'C:\Program Files\Google\Chrome\Application\chrome.exe' --headless --disable-gpu --no-first-run --hide-scrollbars --force-device-scale-factor=1 --window-size=640,640 --user-data-dir=$previewProfile --screenshot=$previewPng $previewUrl
+```
+
+Chrome 可能异步结束写图，应确认 PNG 存在后再打开查看。M0 视觉验收对象为 F1 浅灰圆形，无辅助线、标注或 AI 结果。
 
 ## Illustrator 安装与运行（后续阶段）
 
