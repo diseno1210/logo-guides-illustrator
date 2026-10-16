@@ -1,6 +1,6 @@
 # 使用说明
 
-当前进度M4：M1/M2真实实测已通过，M3/M4自动验收通过；Generate包含参考线、笔画/间距倍率、圆/环/偏差标记并写入自动a，仍使用默认设置。F2已支持环厚度兜底。复杂Logo超过maxLanes时输出LABEL_LANES_FULL，末车道可能重叠。完整对话框/Refresh/Clear留到M6，角度留到M5。
+当前进度M5：参考线、测量、圆/环/偏差、角度/构造线/吸附目标线、实际图例已自动验收；可选安全区/背景默认关闭。Generate仍使用默认设置，完整对话框/Refresh/Clear正在M6整合。复杂Logo超过maxLanes时输出LABEL_LANES_FULL，末车道可能重叠。
 
 CircleFromSelection已构建：用直接选择工具选中至少3个锚点后运行同名jsx，圆和半径/选中点最大偏差写入LG Manual。有文档a时显示倍率，否则显示pt。刷新保留手动结果的实际宿主行为在M6第14.5节验收。面板与AI未实现。
 

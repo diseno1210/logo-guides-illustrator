@@ -90,6 +90,12 @@ LG.layout = (function () {
                 extras.push({type:"polygon",points:[tip,V.add(back,V.scale(N,0.3*fs)),V.sub(back,V.scale(N,0.3*fs))],closed:true,style:"devMarker",layer:"deviation",featureId:c.id});extras.push(LG.primitives.label(V.add(c.maxErrPoint,V.scale(radial,fs)),0,[{text:(c.maxErrSigned>=0?"+":"")+LG.ratios.number(c.maxErrSigned,2)+"pt",sizeFactor:0.75,style:"textWarn"}],c.id));
             }
         });}
+        U.each(model.angles||[],function(a){
+            var delta=(a.ray2Deg-a.ray1Deg+540)%360-180;var start=a.kind==="pair"?a.ray1Deg:Math.min(a.ray1Deg,a.ray1Deg+delta);var end=a.kind==="pair"?a.ray2Deg:Math.max(a.ray1Deg,a.ray1Deg+delta);var ra=model.derived.ra;
+            extras.push({type:"arc",c:a.center.slice(0),r:ra,startDeg:start,endDeg:end,style:"angleArc",layer:"angles",featureId:a.id});
+            if(a.kind==="axis"){extras.push({type:"line",p0:a.center.slice(0),p1:V.add(a.center,V.scale(LG.angles.direction(a.ray1Deg),2*ra)),style:"angleRef",layer:"angles",featureId:a.id});}
+            extras.push(LG.primitives.label(V.add(a.center,V.scale(LG.angles.direction((start+end)/2),ra+0.9*fs)),0,LG.ratios.labelLines(a.measure,cfg),a.id));
+        });
         U.each(extras,function(p){if(p.type==="label"){var box=labelBounds(p,fs);area=U.union(area,[box[0]-fs,box[1]+fs,box[2]+fs,box[3]-fs]);}});
         var render=references(model,area,extents);render.primitives=extras;render.dimensionLines=guides;return render;
     }

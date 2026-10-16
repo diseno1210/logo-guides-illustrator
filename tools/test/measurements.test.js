@@ -1,7 +1,7 @@
 'use strict';
 const test=require('node:test');const assert=require('node:assert/strict');
 const {loadCore}=require('./load_core');const {getFixture,geometry,rectangle}=require('./fixtures');
-const {LG,plain}=loadCore();const analyze=(g,s)=>plain(LG.analyze(g,s));
+const {LG,plain}=loadCore();const analyze=(g,s={})=>plain(LG.analyze(g,{...s,features:{legend:false,...s.features}}));
 const near=(a,b,e=1e-7)=>assert.ok(Math.abs(a-b)<=e,`${a} != ${b}`);
 test('F3 widths, bbox gaps, automatic a and un-snapped labels match the specification',()=>{
  const r=analyze(getFixture('F3'));assert.equal(r.analysis.baseUnit.source,'auto-stem');near(r.analysis.baseUnit.value,20);

@@ -55,7 +55,7 @@ function renderAnalysis(geometry, settings = {}, suppliedResult) {
     const s = styles[key];
     return `fill="${s.fillHex || 'none'}" stroke="${s.stroke || 'none'}" opacity="${s.opacity / 100}"` + (s.stroke ? ` stroke-width="${s.width * render.strokeUnit}" stroke-dasharray="${s.dashes.length ? s.dashes.map(v => v * render.strokeUnit).join(' ') : 'none'}" stroke-linecap="butt"` : '');
   };
-  const guides = render.primitives.map(p => {
+  const primitiveSvg = p => {
     if (p.type === 'line') return `    <path data-feature="${escapeXml(p.featureId)}" d="M ${pointText(p.p0)} L ${pointText(p.p1)}" ${styleAttributes(p.style)}/>`;
     if(p.type==='polygon')return `    <path data-feature="${escapeXml(p.featureId)}" d="M ${p.points.map(pointText).join(' L ')}${p.closed?' Z':''}" ${styleAttributes(p.style)}/>`;
     if(p.type==='circle')return `    <circle data-feature="${escapeXml(p.featureId)}" cx="${p.c[0]}" cy="${-p.c[1]}" r="${p.r}" ${styleAttributes(p.style)}/>`;
@@ -76,13 +76,16 @@ function renderAnalysis(geometry, settings = {}, suppliedResult) {
       return `    <g data-feature="${escapeXml(p.featureId)}" transform="translate(${pointText(p.pos)}) rotate(${-p.rotation})">${lines}</g>`;
     }
     throw new Error('Unsupported preview primitive: ' + p.type);
-  }).join('\n');
+  };
+  const background=render.primitives.filter(p=>p.layer==='background').map(primitiveSvg).join('\n');
+  // Repaint the original group after the background inside the skipped guide subtree.
+  const guides=background+(background?'\n<use href="#lg-geometry"/>\n':'')+render.primitives.filter(p=>p.layer!=='background').map(primitiveSvg).join('\n');
   // Margin mode depends on geometry bounds, so guide-area viewports do not drift on reimport.
   const geometryGroup = renderGeometry(geometry).match(/  <g id="lg-geometry">[\s\S]*?  <\/g>/)[0];
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="${left} ${-top} ${right-left} ${top-bottom}" width="${right-left}pt" height="${top-bottom}pt">
-  <title>Logo Guides — M2 reference preview</title>
-  <desc>Reference lines only. Stem measurements, circles, angles and legend await later milestones.</desc>
+  <title>Logo Guides — analysis preview</title>
+  <desc>Geometry and actual shared-core render primitives, with y-up coordinates converted to SVG.</desc>
 ${geometryGroup}
   <g id="lg-guides">
 ${guides}
@@ -104,7 +107,7 @@ if (require.main === module) {
   try {
     const args = process.argv.slice(2);
     if (!args[0] || (args.length > 1 && (args[1] !== '--out' || args.length !== 3))) throw new Error('Usage: npm run preview -- input.json|input.svg [--out output.svg]');
-    console.log('M2 references: ' + preview(args[0], args[2]));
+    console.log('Analysis preview: ' + preview(args[0], args[2]));
   } catch (error) { console.error(error.message); process.exitCode = 1; }
 }
 module.exports = { renderGeometry, renderAnalysis, contourPath, preview };

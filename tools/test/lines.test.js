@@ -8,7 +8,7 @@ const { getFixture, geometry, rectangle, circlePart } = require('./fixtures');
 const { loadGeometry, importSvg } = require('../svg_import');
 const { renderAnalysis } = require('../preview');
 const { LG, plain } = loadCore();
-const analyze = (g, settings={}) => plain(LG.analyze(g, {...settings,features:{stemWidths:false,gaps:false,circles:false,ringThickness:false,...settings.features}}));
+const analyze = (g, settings={}) => plain(LG.analyze(g, {...settings,features:{stemWidths:false,gaps:false,circles:false,ringThickness:false,angles:false,constructionLines:false,legend:false,...settings.features}}));
 const horizontal = r => r.analysis.lines.filter(l => l.orient === 'h');
 const classes = r => horizontal(r).map(l => [l.pos, l.category, l.subtype]);
 

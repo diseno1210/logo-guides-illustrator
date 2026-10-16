@@ -1,5 +1,5 @@
 LG.hostDraw = (function () {
-    var names = { labels: "LG Labels", deviation: "LG Deviation", targets: "LG Targets", angles: "LG Angles", dimensions: "LG Dimensions", circles: "LG Circles", visualLines: "LG Visual Lines", baselines: "LG Baselines", construction: "LG Construction", clearSpace: "LG Clear Space", legend: "LG Legend", snapGuides: "LG Snap Guides", manual: "LG Manual" };
+    var names = { labels: "LG Labels", deviation: "LG Deviation", targets: "LG Targets", angles: "LG Angles", dimensions: "LG Dimensions", circles: "LG Circles", visualLines: "LG Visual Lines", baselines: "LG Baselines", construction: "LG Construction", clearSpace: "LG Clear Space", legend: "LG Legend", snapGuides: "LG Snap Guides", manual: "LG Manual", background:"Logo Guides BG" };
     var order = ["labels", "deviation", "targets", "angles", "dimensions", "circles", "visualLines", "baselines", "construction", "clearSpace", "legend", "snapGuides"];
     /** RGB hex to Illustrator document color; simple formula for CMYK. */
     function color(hex, doc) {
@@ -57,20 +57,21 @@ LG.hostDraw = (function () {
     /** Render M2 line/label primitives and metadata; restore source selection/layer even on error. */
     function generate(doc, result, settings, sources) {
         var U = LG.util; var savedLayer = doc.activeLayer; var savedSelection = doc.selection; var root = LG.hostStore.layer(doc); var wasLocked = root ? root.locked : false;
-        var completed = false; var layers = {}; var used = {}; var styles = LG.styles.preset(settings.stylePreset); var i; var key; var primitive; var item; var data;
+        var completed = false; var layers = {}; var used = {}; var styles = LG.styles.preset(settings.stylePreset); var i; var key; var primitive; var item; var data;var bg=null;
         // Validate supported primitives and existing metadata before deleting old automatic output.
         LG.hostStore.read(doc);
-        U.each(result.render.primitives, function (p) { if (U.indexOf(["line","label","polygon","circle","arc"],p.type)<0 || !U.has(names, p.layer)) { throw new Error("Unsupported primitive"); } var guide=p.type==="line"||p.type==="circle"||p.type==="arc";if(!guide||settings.output!=="guides"){used[p.layer] = true;} if (guide && settings.output !== "styled") { used.snapGuides = true; } });
+        U.each(result.render.primitives, function (p) { if (U.indexOf(["line","label","polygon","circle","arc"],p.type)<0 || !U.has(names, p.layer)) { throw new Error("Unsupported primitive"); } var guide=p.layer!=="legend"&&(p.type==="line"||p.type==="circle"||p.type==="arc");if(!guide||settings.output!=="guides"){used[p.layer] = true;} if (guide && settings.output !== "styled") { used.snapGuides = true; } });
         if (!root) { root = doc.layers.add(); root.name = "Logo Guides"; }
         try {
             root.locked = false; root.visible = true; root.zOrder(ZOrderMethod.BRINGTOFRONT);
             for (i = root.layers.length - 1; i >= 0; i -= 1) { if (root.layers[i].name !== "LG Manual") { root.layers[i].locked = false; root.layers[i].remove(); } }
             for (i = doc.layers.length - 1; i >= 0; i -= 1) { if (doc.layers[i].name === "Logo Guides BG") { doc.layers[i].locked = false; doc.layers[i].remove(); } }
+            if(used.background){bg=doc.layers.add();bg.name="Logo Guides BG";bg.zOrder(ZOrderMethod.SENDTOBACK);layers.background=bg;}
             for (i = order.length - 1; i >= 0; i -= 1) { key = order[i]; if (used[key]) { layers[key] = root.layers.add(); layers[key].name = names[key]; } }
             for (i = 0; i < result.render.primitives.length; i += 1) {
                 primitive = result.render.primitives[i];
                 if (primitive.type === "label") { label(layers[primitive.layer], primitive, result.render, styles, settings, doc); }
-                else if(primitive.type==="polygon"){item=shape(layers[primitive.layer],primitive);item.name=primitive.featureId;style(item,styles[primitive.style],result.render.strokeUnit,doc);}
+                else if(primitive.type==="polygon"||primitive.layer==="legend"){item=shape(layers[primitive.layer],primitive);item.name=primitive.featureId;style(item,styles[primitive.style],result.render.strokeUnit,doc);}
                 else {
                     if (settings.output !== "guides") { item = shape(layers[primitive.layer],primitive); item.name = primitive.featureId; style(item, styles[primitive.style], result.render.strokeUnit, doc); }
                     if (settings.output !== "styled") { item = shape(layers.snapGuides,primitive); item.name = primitive.featureId; item.filled = false; item.stroked = false; item.guides = true; }
@@ -79,7 +80,7 @@ LG.hostDraw = (function () {
             data = LG.hostStore.createData(result.analysis, settings); LG.hostStore.write(root, data); LG.hostStore.tagSources(doc, sources, data.runId); completed = true;
             return data;
         } finally {
-            try { root.locked = completed ? settings.lockLayer : wasLocked; }
+            try { root.locked = completed ? settings.lockLayer : wasLocked;if(bg){bg.locked=completed?settings.lockLayer:false;} }
             finally { try { doc.activeLayer = savedLayer; } finally { doc.selection = completed ? sources : savedSelection; } }
         }
     }

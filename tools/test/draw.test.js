@@ -33,7 +33,7 @@ function harness(){
     list.push(group);return group;
   };return list;}
   function layers(parent){const list=[];list.add=()=>{
-    const layer={typename:'Layer',name:'',parent,locked:false,visible:true,zOrder(){const index=list.indexOf(layer);list.splice(index,1);list.unshift(layer);},remove(){assert.equal(this.locked,false);list.splice(list.indexOf(layer),1);}};
+    const layer={typename:'Layer',name:'',parent,locked:false,visible:true,zOrder(method){const index=list.indexOf(layer);list.splice(index,1);if(method===1)list.push(layer);else list.unshift(layer);},remove(){assert.equal(this.locked,false);list.splice(list.indexOf(layer),1);}};
     layer.layers=layers(layer);layer.pathItems=pathItems(layer);layer.groupItems=groups();
     list.unshift(layer);doc.activeLayer=layer;return layer;
   };return list;}
@@ -48,7 +48,7 @@ function harness(){
   function Folder(name){this.fsName=name;this.exists=true;}Folder.userData={fsName:'/mock'};
   Object.assign(context,{File,Folder,app:{documents:[doc],activeDocument:doc,textFonts:{getByName(name){fontLookups.push(name);if(name==='ArialMT'||name==='MicrosoftYaHei')return {name};throw new Error('missing font');}}},alert:m=>alerts.push(m),confirm:()=>true,RGBColor:function(){},CMYKColor:function(){},DocumentColorSpace:{CMYK:1},StrokeCap:{BUTTENDCAP:0},ZOrderMethod:{BRINGTOFRONT:0},Transformation:{CENTER:0}});
   vm.runInContext(bundleFiles(sourceFiles(path.join(ROOT,'src/host'))),context);
-  context.PathPointSelection={ANCHORPOINT:1,LEFTDIRECTION:2,RIGHTDIRECTION:3,NOSELECTION:0};
+  context.PathPointSelection={ANCHORPOINT:1,LEFTDIRECTION:2,RIGHTDIRECTION:3,NOSELECTION:0};context.ZOrderMethod.SENDTOBACK=1;
   return {LG,context,plain,doc,artwork,alerts,fontLookups,state,files};
 }
 
@@ -56,7 +56,7 @@ test('Generate draws references, stores hidden Doc Data, tags sources, locks lay
   const {LG,plain,doc,artwork}=harness();const sources=doc.selection;const settings=LG.config.defaults();const result=LG.analyze(F3(),{features:{stemWidths:false,gaps:false}});
   const data=plain(LG.hostDraw.generate(doc,result,settings,sources));
   const root=doc.layers[0];assert.equal(root.name,'Logo Guides');assert.equal(root.locked,true);assert.equal(doc.activeLayer,artwork);assert.equal(doc.selection,sources);
-  assert.deepEqual(root.layers.map(l=>l.name),['LG Baselines']);
+  assert.deepEqual(root.layers.map(l=>l.name),['LG Baselines','LG Legend']);
   const drawn=root.layers[0].pathItems;assert.equal(drawn.length,8);
   for(let i=0;i<drawn.length;i++){assert.equal(drawn[i].name,result.render.primitives[i].featureId);assert.equal(drawn[i].strokeWidth,0.25);assert.deepEqual(plain(drawn[i].strokeDashes),[0.75,0.5]);assert.equal(drawn[i].filled,false);}
   const stored=root.pathItems[0];assert.equal(stored.name,'__LG_DATA__');assert.equal(stored.hidden,true);assert.deepEqual(JSON.parse(stored.note),data);
@@ -118,7 +118,7 @@ test('built Generate executes the actual read/analyze/draw/store flow in the ES3
   const {context,doc,artwork,alerts,files}=harness();const target=build().find(file=>file.endsWith('LogoGuides_Generate.jsx'));
   vm.runInContext(fs.readFileSync(target,'utf8').replace(/^#target illustrator\n/,''),context,{timeout:5000});
   assert.equal(doc.activeLayer,artwork);assert.equal(doc.layers[0].name,'Logo Guides');assert.equal(doc.layers[0].layers.find(l=>l.name==='LG Baselines').pathItems.length,8);
-  assert.ok(alerts.some(m=>/Reference lines generated: 8/.test(m)));assert.ok(files.get('/mock/LogoGuides/log.txt').includes('M4 Generate OK'));
+  assert.ok(alerts.some(m=>/Reference lines generated: 8/.test(m)));assert.ok(files.get('/mock/LogoGuides/log.txt').includes('M5 Generate OK'));
 });
 
 test('arc uses <=90degree cubics with outgoing right and incoming left handles; ellipse uses y-up bounds',()=>{
@@ -133,4 +133,8 @@ test('manual circle uses actual anchor selection enums, shared cubic samples, pt
  path.pathPoints[1].selected=2;path.pathPoints[3].selected=0;assert.equal(LG.hostManual.selected(doc,s).anchors.length,2);assert.throws(()=>LG.hostManual.circle(doc,s),/至少 3/);
  path.pathPoints.forEach(p=>p.selected=1);doc.layers[0].pathItems[0].remove();LG.hostManual.circle(doc,s);assert.match(manual.groupItems[1].textFrames[0].contents,/pt$/);
  LG.hostDraw.generate(doc,LG.analyze(F3(),s),s,[path]);assert.ok(doc.layers[0].layers.includes(manual));
+});
+
+test('guides output keeps styled legend samples and background is a locked bottom top-level layer',()=>{
+ const {LG,doc,artwork}=harness();const settings=LG.config.resolve({output:'guides',features:{background:true}}).settings;LG.hostDraw.generate(doc,LG.analyze(F3(),settings),settings,doc.selection);const bg=doc.layers.at(-1);assert.equal(bg.name,'Logo Guides BG');assert.equal(bg.locked,true);assert.equal(bg.pathItems.length,1);assert.equal(doc.layers[0].name,'Logo Guides');const legend=doc.layers[0].layers.find(l=>l.name==='LG Legend');assert.ok(legend.pathItems.length>0);assert.ok(legend.pathItems.every(p=>p.guides!==true&&p.stroked));assert.equal(doc.activeLayer,artwork);
 });
