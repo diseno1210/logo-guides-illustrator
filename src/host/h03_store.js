@@ -30,8 +30,10 @@ LG.hostStore = (function () {
     /** Temporarily unlock a source and its ancestors solely while editing its tag. */
     function editable(item,fn){var locks=[];var cursor=item;var i;while(cursor&&cursor.typename!=="Document"){if(cursor.locked){locks.push(cursor);}cursor=cursor.parent;}try{for(i=locks.length-1;i>=0;i-=1){locks[i].locked=false;}return fn();}finally{for(i=0;i<locks.length;i+=1){locks[i].locked=true;}}}
     function layerLocks(doc){var result=[];function walk(parent){var i;for(i=0;i<parent.layers.length;i+=1){result.push({layer:parent.layers[i],locked:parent.layers[i].locked});walk(parent.layers[i]);}}walk(doc);return result;}
-    function restoreLocks(doc,locks){var current=layerLocks(doc);var i;for(i=locks.length-1;i>=0;i-=1){(function(snapshot){LG.util.each(current,function(item){if(item.layer===snapshot.layer){item.layer.locked=snapshot.locked;}});}(locks[i]));}}
-    function restoreActiveLayer(doc,saved){var current=layerLocks(doc);var found=false;LG.util.each(current,function(item){if(item.layer===saved){found=true;}});if(found){doc.activeLayer=saved;return;}var i;for(i=0;i<doc.layers.length;i+=1){if(!LG.hostRead.inGuides(doc.layers[i])){doc.activeLayer=doc.layers[i];return;}}}
+    /** Native Illustrator can throw even when comparing a removed Layer reference. */
+    function sameLiveLayer(a,b){try{return a===b;}catch(invalidLayer){return false;}}
+    function restoreLocks(doc,locks){var current=layerLocks(doc);var i;for(i=locks.length-1;i>=0;i-=1){(function(snapshot){var target;try{target=snapshot.layer;}catch(invalidLayer){return;}LG.util.each(current,function(item){if(sameLiveLayer(item.layer,target)){item.layer.locked=snapshot.locked;}});}(locks[i]));}}
+    function restoreActiveLayer(doc,saved){var current=layerLocks(doc);var found=false;LG.util.each(current,function(item){if(sameLiveLayer(item.layer,saved)){found=true;}});if(found){doc.activeLayer=saved;return;}var i;for(i=0;i<doc.layers.length;i+=1){if(!LG.hostRead.inGuides(doc.layers[i])){doc.activeLayer=doc.layers[i];return;}}}
     /** Save contract Doc Data in the reserved hidden path. */
     function write(root, data) {
         var item = dataPath(root);

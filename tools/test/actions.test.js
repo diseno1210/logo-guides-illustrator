@@ -30,6 +30,11 @@ for(const mode of ['auto','all','data'])test('Clear '+mode+' removes only the sp
 test('Clear cancellation is inert; removal failure restores remaining locks and original activeLayer',()=>{
  const h=generated();const {LG,doc,state,artwork}=h;const layers=Array.from(doc.layers[0].layers);assert.equal(LG.hostActions.clear(doc,'cancel'),false);assert.deepEqual(Array.from(doc.layers[0].layers),layers);const bg=doc.layers.add();bg.name='Logo Guides BG';bg.locked=true;doc.activeLayer=artwork;state.failRemoving='Logo Guides BG';assert.throws(()=>LG.hostActions.clear(doc,'auto'),/removal failure/);assert.equal(bg.locked,true);assert.equal(doc.layers.find(l=>l.name==='Logo Guides').locked,true);assert.equal(doc.activeLayer,artwork);
 });
+test('restoring layer locks skips invalid native snapshots and still restores surviving layers',()=>{
+ const {LG,doc,artwork}=harness();const invalid={};Object.defineProperty(invalid,'layer',{get(){throw new ReferenceError('Object is invalid');}});artwork.locked=false;LG.hostStore.restoreLocks(doc,[{layer:artwork,locked:true},invalid]);assert.equal(artwork.locked,true);
+ // A live setter failure must not be swallowed as though its layer were deleted.
+ Object.defineProperty(artwork,'locked',{set(){throw new Error('native locking failed');},configurable:true});assert.throws(()=>LG.hostStore.restoreLocks(doc,[{layer:artwork,locked:true}]),/native locking failed/);
+});
 test('SetBaseUnit obtains object or two-anchor options and automatically refreshes existing tagged sources',()=>{
  const {LG,doc,artwork,plain}=generated();const first=LG.hostStore.read(doc);doc.selection=[artwork.pathItems[0]];assert.deepEqual(plain(LG.hostActions.baseOptions(doc,LG.config.defaults())).map(o=>o.value),[20,100,20]);const p=artwork.pathItems[0];p.pathPoints[0].selected=1;p.pathPoints[2].selected=1;assert.deepEqual(plain(LG.hostActions.baseOptions(doc,LG.config.defaults())).map(o=>o.value),[Math.hypot(20,100),20,100]);const r=LG.hostActions.setBaseUnit(doc,10);assert.equal(r.data.runId,first.runId);assert.deepEqual(plain(r.data.baseUnit),{value:10,source:'manual',locked:true});assert.equal(r.result.analysis.stems[0].measure.display,'2a');assert.throws(()=>LG.hostActions.setBaseUnit(doc,-1),/正数/);
 });
