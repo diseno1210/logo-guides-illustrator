@@ -1,6 +1,6 @@
 # Logo 辅助线生成器
 
-面向 Adobe Illustrator 的 Logo / 字标辅助线工具。M0 已验收；**M1 几何核心与导出已实现，等待 Illustrator 实测**。尚不能生成辅助线。
+面向 Adobe Illustrator 的 Logo / 字标辅助线工具。**M0、M1 已验收**；真实 Illustrator 导出已通过 Node 读取与预览核对。M2 参考线与基础绘制即将实施。
 
 ## 开发入口
 
@@ -29,4 +29,4 @@ npm run validate:geometry -- <导出的geometry_dump.json路径>
 
 本地 `main` 分支，尚未连接远程仓库。源码、文档、测试和 `package-lock.json` 入库；`node_modules/`、`dist/`、日志和密钥不入库。DumpGeometry 可读取选区并导出 JSON；Generate 仍为阶段提示。
 
-当前停在原规范 M1 的用户实测门槛。请按 [M1 验收步骤](docs/acceptance/M1.md) 验证，确认后继续 M2。
+真实导出验收证据见 [M1 验收记录](docs/acceptance/M1.md)。下一处用户验收是 M2 的 Illustrator 基准线绘制。
