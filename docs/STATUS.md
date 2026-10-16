@@ -25,7 +25,7 @@
 
 - 日期：2026-10-16；Windows / Node v24.19.0 / npm 10.9.4（由已有 pnpm 临时执行）/ Git 2.53.0.windows.3。
 - 文档与仓库基础提交：`6f22276`，`docs: establish specification and milestone workflow`。
-- 工具链提交：见后续验收提交中的记录；无 origin、无 push、无发布 tag。
+- 工具链与测试提交：`7bc5306`，`build: complete M0 toolchain and F1 preview validation`；无 origin、无 push、无发布 tag。
 - 全新 `npm ci --ignore-scripts --no-audit --no-fund` 重新安装三个锁定依赖成功，package-lock.json hash 未变化。
 - `npm test`：48 项通过，0 失败、0 跳过、0 todo。覆盖 ES3 禁用语法/API、例外规则、vm 禁用环境、确定性构建、F1 契约、规定 SVG 元素/路径/变换、输入错误和往返导入。
 - `npm run build` 与 `npm run check:es3`：`dist/scripts/LogoGuides_Generate.jsx` 全 ASCII，ES3 通过；在带 app 访问陷阱的 vm 中只弹阶段提示，不访问宿主且不泄露 LG 全局。
