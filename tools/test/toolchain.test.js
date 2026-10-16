@@ -13,7 +13,7 @@ const { checkSource } = require('../check_es3');
 test('shared core loads with every contract-banned API removed and no host objects', () => {
   const { context, LG, plain } = loadCore();
   assert.equal(LG.version, '0.0.0-dev');
-  assert.equal(LG.milestone, 'M1');
+  assert.equal(LG.milestone, 'M2');
   assert.equal(typeof LG.geometry.normalize, 'function');
   assert.equal(typeof LG.json.stringify, 'function');
   const values = vm.runInContext(`
@@ -23,7 +23,7 @@ test('shared core loads with every contract-banned API removed and no host objec
      typeof Math.hypot, typeof Number.isFinite, typeof app, typeof File]
   `, context);
   assert.ok(Array.from(values).every(value => value === 'undefined'));
-  assert.equal(typeof LG.analyze, 'undefined');
+  assert.equal(typeof LG.analyze, 'function');
   assert.equal(typeof LG.preAnalyze, 'undefined');
   assert.throws(() => vm.runInContext('[1,2].indexOf(2)', context), /not a function/);
   assert.throws(() => vm.runInContext('JSON.parse("{}")', context));
@@ -36,7 +36,7 @@ test('ASCII escaping preserves literal Unicode including surrogate pairs', () =>
   assert.equal(vm.runInNewContext(source + 'x;'), '中文 🎨');
 });
 
-test('build is deterministic, ES3/ASCII, and Generate still only reports stage status', t => {
+test('build is deterministic, ES3/ASCII, and Generate guards missing documents', t => {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'logo-guides-build-'));
   t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
   const products = build(directory);
@@ -48,11 +48,10 @@ test('build is deterministic, ES3/ASCII, and Generate still only reports stage s
   assert.ok(!/[^\x00-\x7f]/.test(source));
   assert.deepEqual(checkSource(source), []);
   const messages = [];
-  const sandbox = { alert: message => messages.push(message) };
-  Object.defineProperty(sandbox, 'app', { get() { throw new Error('M0 must not access Illustrator'); } });
+  const sandbox = { alert: message => messages.push(message), app: { documents: [] } };
   vm.runInNewContext(source.replace(/^#target illustrator\n/, ''), sandbox, { timeout: 1000 });
   assert.equal(messages.length, 1);
-  assert.match(messages[0], /M1.*尚未实现/);
+  assert.match(messages[0], /请先打开文档/);
   assert.equal(sandbox.LG, undefined);
   build(directory);
   assert.equal(fs.readFileSync(generated, 'utf8'), source);

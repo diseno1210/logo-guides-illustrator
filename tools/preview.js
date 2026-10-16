@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { loadGeometry, validateGeometry } = require('./svg_import');
 const ROOT = path.resolve(__dirname, '..');
+const { loadCore } = require('./test/load_core');
 
 function pointText(point) { return `${point[0]} ${-point[1]}`; }
 
@@ -26,8 +27,8 @@ function renderGeometry(geometry) {
   const [left, top, right, bottom] = geometry.artboard;
   const width = right - left;
   const height = top - bottom;
-  const shapes = geometry.parts.map(part =>
-    `    <path id="geometry-${part.sourceIndex}" d="${part.contours.map(contourPath).join(' ')}" fill="${part.filled ? '#D9D9D9' : 'none'}" fill-rule="evenodd" stroke="${part.stroked ? '#A0A0A0' : 'none'}" stroke-width="${part.strokeWidth}"/>`).join('\n');
+  const shapes = geometry.parts.map((part, index) =>
+    `    <path id="geometry-${index}" d="${part.contours.map(contourPath).join(' ')}" fill="${part.filled ? '#D9D9D9' : 'none'}" fill-rule="evenodd" stroke="${part.stroked ? '#A0A0A0' : 'none'}" stroke-width="${part.strokeWidth}"/>`).join('\n');
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="${left} ${-top} ${width} ${height}" width="${width}pt" height="${height}pt">
   <title>Logo Guides — geometry-only preview</title>
@@ -40,8 +41,50 @@ ${shapes}
 `;
 }
 
+function escapeXml(value) { return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+/** Render the real implemented analysis; no substitute circles or measurements. */
+function renderAnalysis(geometry, settings = {}, suppliedResult) {
+  const { LG, plain } = loadCore();
+  const result = suppliedResult || plain(LG.analyze(geometry, settings));
+  const resolved = plain(LG.config.resolve(settings).settings);
+  const styles = plain(LG.styles.preset(resolved.stylePreset));
+  const render = result.render;
+  const [left, top, right, bottom] = render.guideArea;
+  const styleAttributes = key => {
+    const s = styles[key];
+    return `fill="${s.fillHex || 'none'}" stroke="${s.stroke || 'none'}" opacity="${s.opacity / 100}"` + (s.stroke ? ` stroke-width="${s.width * render.strokeUnit}" stroke-dasharray="${s.dashes.length ? s.dashes.map(v => v * render.strokeUnit).join(' ') : 'none'}" stroke-linecap="butt"` : '');
+  };
+  const guides = render.primitives.map(p => {
+    if (p.type === 'line') return `    <path data-feature="${escapeXml(p.featureId)}" d="M ${pointText(p.p0)} L ${pointText(p.p1)}" ${styleAttributes(p.style)}/>`;
+    if (p.type === 'label') {
+      const total = p.lines.reduce((sum, line) => sum + 1.2 * render.fontSize * line.sizeFactor, 0);
+      let cursor = -total / 2;
+      const lines = p.lines.map(line => {
+        const size = render.fontSize * line.sizeFactor;
+        const y = cursor + size * 0.9; cursor += 1.2 * size;
+        return `<text x="0" y="${y}" text-anchor="middle" font-family="Arial,sans-serif" font-size="${size}" ${styleAttributes(line.style)}>${escapeXml(line.text)}</text>`;
+      }).join('');
+      return `    <g data-feature="${escapeXml(p.featureId)}" transform="translate(${pointText(p.pos)}) rotate(${-p.rotation})">${lines}</g>`;
+    }
+    throw new Error('Unsupported preview primitive: ' + p.type);
+  }).join('\n');
+  // Margin mode depends on geometry bounds, so guide-area viewports do not drift on reimport.
+  const geometryGroup = renderGeometry(geometry).match(/  <g id="lg-geometry">[\s\S]*?  <\/g>/)[0];
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="${left} ${-top} ${right-left} ${top-bottom}" width="${right-left}pt" height="${top-bottom}pt">
+  <title>Logo Guides — M2 reference preview</title>
+  <desc>Reference lines only. Stem measurements, circles, angles and legend await later milestones.</desc>
+${geometryGroup}
+  <g id="lg-guides">
+${guides}
+  </g>
+</svg>
+`;
+}
+
 function preview(input, output) {
-  const svg = renderGeometry(loadGeometry(input));
+  const svg = renderAnalysis(loadGeometry(input));
   const target = output || path.join(ROOT, 'dist', 'previews', path.basename(input, path.extname(input)) + '.svg');
   if (path.resolve(target) === path.resolve(input)) throw new Error('Output must differ from input; use --out to preserve the source');
   fs.mkdirSync(path.dirname(target), { recursive: true });
@@ -53,7 +96,7 @@ if (require.main === module) {
   try {
     const args = process.argv.slice(2);
     if (!args[0] || (args.length > 1 && (args[1] !== '--out' || args.length !== 3))) throw new Error('Usage: npm run preview -- input.json|input.svg [--out output.svg]');
-    console.log('Geometry only: ' + preview(args[0], args[2]));
+    console.log('M2 references: ' + preview(args[0], args[2]));
   } catch (error) { console.error(error.message); process.exitCode = 1; }
 }
-module.exports = { renderGeometry, contourPath, preview };
+module.exports = { renderGeometry, renderAnalysis, contourPath, preview };

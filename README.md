@@ -1,6 +1,6 @@
 # Logo 辅助线生成器
 
-面向 Adobe Illustrator 的 Logo / 字标辅助线工具。**M0、M1 已验收**；真实 Illustrator 导出已通过 Node 读取与预览核对。M2 参考线与基础绘制即将实施。
+面向 Adobe Illustrator 的 Logo / 字标辅助线工具。**M0、M1 已验收；M2 自动验证通过，待 Illustrator 参考线绘制实测**。临时 Generate 仅生成参考线，尺寸标注、圆、角度及完整交互在后续里程碑实现。
 
 ## 开发入口
 
@@ -21,12 +21,14 @@ npm run check:es3
 npm run fixture -- F1
 npm run preview -- dist/previews/F1.geometry.json
 npm run validate:geometry -- <导出的geometry_dump.json路径>
+node tools/validate_references.js
+npm run fixture -- tools/samples/illustrator-boatchin.geometry.json
 ```
 
 当前 Codex 环境没有全局 npm：使用内置 pnpm 的 `pnpm dlx npm@10.9.4 <命令>` 替代 `npm <命令>`，不安装全局工具。详细命令见使用说明。
 
 ## 仓库与交付
 
-本地 `main` 分支，尚未连接远程仓库。源码、文档、测试和 `package-lock.json` 入库；`node_modules/`、`dist/`、日志和密钥不入库。DumpGeometry 可读取选区并导出 JSON；Generate 仍为阶段提示。
+本地 `main` 分支，尚未连接远程仓库。源码、文档、测试和 `package-lock.json` 入库；`node_modules/`、`dist/`、日志和密钥不入库。DumpGeometry 可读取选区并导出 JSON；临时 Generate 绘制参考线、写入文档数据与来源标签，并恢复活动图层。
 
-真实导出验收证据见 [M1 验收记录](docs/acceptance/M1.md)。下一处用户验收是 M2 的 Illustrator 基准线绘制。
+真实导出证据见 [M1 验收记录](docs/acceptance/M1.md)。当前请按 [M2 验收步骤](docs/acceptance/M2.md) 测试 `dist/scripts/LogoGuides_Generate.jsx`；通过前不进入 M3。

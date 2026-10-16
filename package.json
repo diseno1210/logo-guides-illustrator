@@ -2,7 +2,7 @@
   "name": "logo-guides",
   "version": "0.0.0-dev",
   "private": true,
-  "description": "Illustrator logo construction guides — M1 geometry and dump acceptance",
+  "description": "Illustrator logo construction guides — M2 reference lines and drawing acceptance",
   "engines": { "node": ">=20" },
   "scripts": {
     "build": "node tools/build.js",

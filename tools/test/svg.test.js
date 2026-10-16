@@ -141,4 +141,5 @@ test('JSON and SVG fixture input both preview without overwriting source or reim
   assert.equal(fs.readFileSync(first, 'utf8'), fs.readFileSync(second, 'utf8'));
   assert.deepEqual(loadGeometry(first).parts, F1().parts);
   assert.throws(() => preview(files.svg, files.svg), /must differ/);
+  assert.throws(() => runFixture(files.json, directory), /must differ/);
 });

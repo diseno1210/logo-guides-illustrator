@@ -1,9 +1,23 @@
 LG.hostRead = (function () {
+    /** Reserved output layers never become source artwork. */
+    function inGuides(item) { var cursor = item; while (cursor) { if (cursor.typename === "Layer" && (cursor.name === "Logo Guides" || cursor.name === "Logo Guides BG")) { return true; } cursor = cursor.parent; } return false; }
+    /** Deduplicate top-level sources; promote compound-path children. */
+    function sourceObjects(doc) {
+        var selected = doc.selection; var sources = []; var roots = []; var i; var candidate; var current; var nested;
+        if (selected && selected.typename === "TextRange") { throw new Error("请按 Esc 退出文字编辑后再导出 / Exit text editing first."); }
+        if (!selected || !selected.length) { throw new Error("请先选中 logo / Select a logo first."); }
+        for (i = 0; i < selected.length; i += 1) {
+            candidate = selected[i];
+            if (candidate.typename === "TextRange") { throw new Error("请按 Esc 退出文字编辑后再导出 / Exit text editing first."); }
+            if (candidate.typename === "PathItem" && candidate.parent && candidate.parent.typename === "CompoundPathItem") { candidate = candidate.parent; }
+            if (!inGuides(candidate) && LG.util.indexOf(sources, candidate) < 0) { sources.push(candidate); }
+        }
+        for (i = 0; i < sources.length; i += 1) { nested = false; current = sources[i].parent; while (current) { if (LG.util.indexOf(sources, current) >= 0) { nested = true; break; } current = current.parent; } if (!nested) { roots.push(sources[i]); } }
+        return roots;
+    }
     /** Read selected top-level sources into Geometry JSON v1; do not mutate originals. */
     function selection(doc, settings) {
-        var U = LG.util; var cfg = LG.config.resolve(settings); var selected = doc.selection; var sources = []; var roots = []; var parts = []; var warnings = []; var skipped = {}; var anchorCount = 0; var approvedLarge = false; var savedLayer = doc.activeLayer; var geometryBox = null; var i; var j; var candidate; var current; var nested; var board; var boards; var center; var color;
-        /** Check a source or ancestor against the reserved output layers. */
-        function inGuides(item) { var cursor = item; while (cursor) { if (cursor.typename === "Layer" && (cursor.name === "Logo Guides" || cursor.name === "Logo Guides BG")) { return true; } cursor = cursor.parent; } return false; }
+        var U = LG.util; var cfg = LG.config.resolve(settings); var selected = doc.selection; var roots = sourceObjects(doc); var parts = []; var warnings = []; var skipped = {}; var anchorCount = 0; var approvedLarge = false; var savedLayer = doc.activeLayer; var geometryBox = null; var i; var j; var board; var boards; var center; var color;
         /** Count unsupported objects by type. */
         function skip(type) { skipped[type] = (U.has(skipped, type) ? skipped[type] : 0) + 1; }
         /** Snapshot pathPoints once; empty and zero-length paths are omitted. */
@@ -43,16 +57,6 @@ LG.hostRead = (function () {
                 finally { try { if (outline) { outline.remove(); } } finally { if (duplicate) { duplicate.remove(); } } }
             } else { skip(type || "Unknown"); }
         }
-        if (selected && selected.typename === "TextRange") { throw new Error("请按 Esc 退出文字编辑后再导出 / Exit text editing first."); }
-        if (!selected || !selected.length) { throw new Error("请先选中 logo / Select a logo first."); }
-        for (i = 0; i < selected.length; i += 1) {
-            candidate = selected[i];
-            if (candidate.typename === "TextRange") { throw new Error("请按 Esc 退出文字编辑后再导出 / Exit text editing first."); }
-            if (candidate.typename === "PathItem" && candidate.parent && candidate.parent.typename === "CompoundPathItem") { candidate = candidate.parent; }
-            if (!inGuides(candidate) && U.indexOf(sources, candidate) < 0) { sources.push(candidate); }
-        }
-        // When parent and descendant were both selected, only read the parent once.
-        for (i = 0; i < sources.length; i += 1) { nested = false; current = sources[i].parent; while (current) { if (U.indexOf(sources, current) >= 0) { nested = true; break; } current = current.parent; } if (!nested) { roots.push(sources[i]); } }
         try {
             for (i = 0; i < roots.length; i += 1) { visit(roots[i], i, false); }
             for (j in skipped) { if (U.has(skipped, j)) { U.warn(warnings, "UNSUPPORTED_ITEMS", "Skipped " + j + ": " + skipped[j]); } }
@@ -64,5 +68,5 @@ LG.hostRead = (function () {
             return { version: 1, units: "pt", colorSpace: color, artboard: [Number(board[0]), Number(board[1]), Number(board[2]), Number(board[3])], parts: parts, warnings: warnings };
         } finally { try { doc.activeLayer = savedLayer; } finally { doc.selection = selected; } }
     }
-    return { selection: selection };
+    return { selection: selection, sourceObjects: sourceObjects };
 }());

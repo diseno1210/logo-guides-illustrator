@@ -43,3 +43,19 @@ Node 24 已提供，但 PATH 无 npm；用已有 pnpm 临时执行 npm@10.9.4，
 ## D009 — JSON2 来源与适配（2026-10-16）
 
 遵循第 5、16 节使用 public-domain JSON-js/json2.js，上游提交 `7e83f38a2312429fd4933169c1f6a27fd65e889c`；将 JSON 对象限定为 LG.json，保留原 stringify/parse 实现。移除 Date/Boolean/Number/String 原型补丁，避免核心库加载修改全局原型；Geometry/Settings 使用普通 JSON 数据，不依赖这些补丁。上游声明和源码保留在 src/core/01_json2.js；没有新增依赖。
+
+## D010 — M2 阶段流水线与尚未计算的 a（2026-10-16）
+
+M1 真实导出已通过第 15 节门槛，继续到 M2 的基准线绘制用户验收点。M2 以原有 `analyze → { analysis, render }` 契约输出真实参考线；未实现的测量特征数组为空，不产生模拟测量或圆。自动 a 在 M3 才实现，所以 `analysis.baseUnit.value/source` 暂为 null、candidates 为空；Doc Data 的对应值为 null 且 locked=false，不能伪造 auto-stem 来源。明确给定的手动 a 原值写入，来源 manual，按设置锁定。M3 再补全自动 a。
+
+Generate 暂用第 7 节默认设置，不提前实现 M6 对话框、全局设置、Refresh/Clear。标签构造、估算和宿主多行绘制已经实现并自动测试，但参考线阶段不会生成尺寸标签。M2 竖参考线使用支撑行上下外扩 fs 的基础跨度，M3 加入实际车道后补全。曲线重复极值按同一轮廓、同一类型去重，保留不同轮廓证据以支持 mixed 分类。多数极值类型平票时按 top 处理，结果确定。
+
+## D011 — F9 的平直基准线与通用保留阈值冲突（2026-10-16）
+
+第 8.6 节的通用保留条件与第 14.2 节 F9 的明确验收期望冲突：F9 的 I 上下边各 20pt，小于 `lineKeepFlatRel × S = 0.3 × 104 = 31.2pt`；每簇只有一个部件，且 O 的超出簇是最外侧，因此通用条件会丢弃 y=0/100，而 F9 明确要求它们为 baseline/flat。
+
+采用最小冲突处理：只有已满足保留条件且满足超出距离/方向判定的曲线簇，才额外保留它所依附的最近平直簇。既满足 F9，又保留平直与超出线的语义配对；不降低全局阈值、不改第 7 节、不对所有短平边放宽。自动测试固定验证 F9 的 4 条水平线，并覆盖平移/缩放不变性。
+
+## D012 — 样式数据字段与 ES3 检查（2026-10-16）
+
+附录 B 没有限定样式对象的内部字段。内部填充色采用 fillHex，避免与禁用的 Array.prototype.fill 同名，遵守第 16 节；不放宽检查器、不滥用 es3-ok。数据契约中的 style、layer、featureId 保持原样。ES3 未来保留字 short 按原文写为 `edge["short"]`。

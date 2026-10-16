@@ -1,6 +1,6 @@
 # Core 模块
 
-纯函数、ES3、无宿主依赖。当前 M1 实现命名空间、LG.json、util/config/vec/bezier/geometry/sample/ink/rows；不提供假 analyze 或空结果。
+纯函数、ES3、无宿主依赖。M1 几何基础已验收；M2 新增 cluster/edges/lines/layout/styles/primitives 与阶段 analyze，只输出真实检测到的参考线。后续测量数组为空，自动 a 暂为 null，不生成模拟分析。
 
 原文第 5、15 节规定的模块按以下阶段建立，不预先创建无功能源码：
 
