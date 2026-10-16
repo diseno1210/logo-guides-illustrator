@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Logo 辅助线</title><link rel="stylesheet" href="css/panel.css"></head>
+<body>
+<header><div><span class="eyebrow">LOGO GUIDES</span><h1>Logo 辅助线</h1></div><span class="version">M7 · CEP</span></header>
+<nav class="actions"><button id="generate" class="primary">生成</button><button id="refresh">刷新来源</button><button id="dump">导出 dump</button></nav>
+<output id="status" role="status" aria-live="polite">正在连接 Illustrator…</output>
+<main>
+<section><h2>基准单位 <i>a</i></h2><div class="row"><label>a / pt<input id="baseValue" type="number" min="0.000001" step="any"></label><label class="check"><input id="baseLock" type="checkbox">锁定 a</label><button id="setBase">应用</button></div><div class="row"><button id="autoBase">自动选择</button><button id="measure">读取选中宽高 / 候选</button></div><div id="candidates" class="chips"></div><div id="measurements" class="chips"></div></section>
+<section><h2>参数</h2><div id="parameters" class="grid"></div><label class="slider">圆拟合容差 <output id="fitValue"></output><input id="circleFit" type="range" min="0.005" max="0.06" step="0.0001"></label><div id="checks" class="grid checks"></div></section>
+<details open><summary>生成内容</summary><div id="features" class="grid checks"></div></details>
+<section><div class="section-title"><h2>特征管理</h2><label class="check"><input id="curated" type="checkbox">精选模式</label></div><label>视图<select id="view"><option value="category">按类别</option><option value="severity">规范检查 · 按偏差</option></select></label><div id="featureList" class="feature-list"><p class="muted">生成或刷新后显示特征。</p></div></section>
+<details><summary>清除</summary><p class="muted">保留来源对象；最后一项同时移除文档数据与来源标签。</p><div class="stack"><button data-clear="auto">仅自动辅助线</button><button data-clear="all">全部辅助线（含手动）</button><button data-clear="data">全部 + 数据和来源标签</button></div></details>
+<pre id="warnings" aria-live="polite"></pre>
+</main><footer>参数修改后刷新现有来源；首次生成使用当前选区。</footer>
+<script src="vendor/CSInterface.js"></script><script src="js/core.js"></script><script src="js/model.js"></script><script src="js/controller.js"></script><script src="js/app.js"></script>
+</body></html>

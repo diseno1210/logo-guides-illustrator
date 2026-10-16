@@ -108,7 +108,8 @@ function listSources(directory) {
 }
 
 function main(args) {
-  const files = args.length ? args.map(file => path.resolve(file)) : listSources(path.join(ROOT, 'dist', 'scripts'));
+  const files = args.length ? args.map(file => path.resolve(file)) : [...listSources(path.join(ROOT, 'dist', 'scripts')),
+    ...['host/host.jsx','js/core.js','js/model.js'].map(file=>path.join(ROOT,'dist/panel',file)).filter(file=>fs.existsSync(file))];
   if (!files.length) throw new Error('No build products found. Run npm run build first.');
   let count = 0;
   for (const file of files) {

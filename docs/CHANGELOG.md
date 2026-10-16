@@ -1,5 +1,12 @@
 # 变更记录
 
+## Unreleased — M7 panel implementation（2026-10-16）
+
+- Added CEP11 panel manifest, official CSInterface v11 and SDK license provenance.
+- Added V8 panel controller/model for real-time settings, locked base unit, generate/refresh/clear/dump, feature visibility/selection and curated mode.
+- Added seven encoded `LGHost_*` bridge functions with stale-read and pre-draw validation.
+- Added 11 M7 tests; the complete suite now passes 166 tests. F9 native bridge probe passed in 758ms; F10 panel V8 computation measured 307ms in Node. Real CEP UI acceptance remains pending.
+
 ## v0.1.0 — M6（已验收，本地交付，2026-10-16）
 
 - 整合设置窗口、UTF-8全局设置、按来源标签刷新、三种清除、SetBaseUnit、双语摘要、debug数据和完整日志。

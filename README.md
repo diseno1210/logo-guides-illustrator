@@ -1,6 +1,6 @@
 # Logo 辅助线生成器
 
-面向 Adobe Illustrator 的 Logo / 字标辅助线工具。**M0–M6已验收，v0.1脚本可用**。六份脚本包含设置窗口、刷新、清除、基准单位和手动圆工具；M7–M9按计划继续。
+面向 Adobe Illustrator 的 Logo / 字标辅助线工具。**M0–M6已验收，v0.1脚本可用**。M7 CEP 面板已完成源码与自动验证，正在进行 Illustrator CEP 实测；M8–M9按计划继续。
 
 ## 开发入口
 
@@ -9,6 +9,7 @@
 - [当前状态](docs/STATUS.md)、[决策记录](docs/DECISIONS.md)、[变更记录](docs/CHANGELOG.md)。
 - [使用说明](docs/USER_GUIDE.md)：仅描述实际可用能力。
 - [M6用户验收清单](docs/acceptance/M6.md)：按原文第14.5节完成12项宿主验证。
+- [M7实施计划](docs/implementation/M7.md)：面板、桥接与性能门槛。
 
 ## 环境与命令
 
@@ -27,6 +28,8 @@ node tools/validate_milestone.js M6
 npm run fixture -- tools/samples/illustrator-boatchin.geometry.json
 ```
 
+`npm run build` 同时生成 `dist/scripts/` 与 `dist/panel/`；将 `dist/panel/` 复制到 `%APPDATA%/Adobe/CEP/extensions/local.logoguides.panel/` 可进行本机 CEP 调试。
+
 当前 Codex 环境没有全局 npm：使用内置 pnpm 的 `pnpm dlx npm@10.9.4 <命令>` 替代 `npm <命令>`，不安装全局工具。详细命令见使用说明。
 
 ## 仓库与交付
@@ -35,4 +38,4 @@ npm run fixture -- tools/samples/illustrator-boatchin.geometry.json
 
 构建后从Illustrator“文件 › 脚本 › 其他脚本”运行`dist/scripts/LogoGuides_Generate.jsx`。配套有Refresh、Clear、SetBaseUnit、CircleFromSelection和DumpGeometry。详细步骤见使用说明；自动验证与真实宿主证据分别记录在STATUS。
 
-自动测试154项通过，F10预建2000锚点Geometry的Node完整analyze约220ms；真实Illustrator 30.0.0中2000点生成99,609ms，超出15秒目标并列入M7优化。原生RGB/CMYK检查18项通过，真实生成窗口、Ctrl+Z及用户拖动/吸附均已验收。本机交互副本未保留来源标签，须重新生成才能纳入。证据和复现命令见M6验收清单，Node/Chrome/DOM替身结果不能代替真实Illustrator验收。预览在`dist/validation/m6/gallery.html`及`gallery.png`。
+自动测试166项通过，F10预建2000锚点Geometry的Node/V8完整analyze约307ms；真实Illustrator ExtendScript全计算约117秒，作为M7迁移性能基线。原生RGB/CMYK检查18项通过，真实生成窗口、Ctrl+Z及用户拖动/吸附均已验收。M7 F9原生桥接总计758ms；CEP面板实际UI仍待实测。
