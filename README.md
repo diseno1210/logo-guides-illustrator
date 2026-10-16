@@ -34,7 +34,7 @@ npm run fixture -- tools/samples/illustrator-boatchin.geometry.json
 
 ## 仓库与交付
 
-本地`main`，无远程、无推送、无发布tag。源码、文档、测试和锁文件入库；`node_modules/`、`dist/`、日志和密钥不入库。三项开发依赖固定版本，core/host保持ES3、无运行时依赖。
+本地`main`已绑定私有 GitHub 仓库 [`diseno1210/logo-guides-illustrator`](https://github.com/diseno1210/logo-guides-illustrator)。每个里程碑完成后提交并推送；不创建发布 tag，除非用户另行要求。源码、文档、测试和锁文件入库；`node_modules/`、`dist/`、日志和密钥不入库。
 
 构建后从Illustrator“文件 › 脚本 › 其他脚本”运行`dist/scripts/LogoGuides_Generate.jsx`。配套有Refresh、Clear、SetBaseUnit、CircleFromSelection和DumpGeometry。详细步骤见使用说明；自动验证与真实宿主证据分别记录在STATUS。
 

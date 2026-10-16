@@ -140,11 +140,12 @@ $galleryUrl = ([Uri](Resolve-Path 'dist/validation/m6/gallery.html').Path).Absol
 
 Illustrator 30.0.0已完成RGB/CMYK原生DOM检查、中文设置窗口生成、单次撤销与用户拖动验收；Clear删除图层后的失效引用已修复。2000锚点真实生成实测约99.6秒，超过目标，当前脚本版不承诺15秒内完成，M7面板计算迁移时优化。用户确认原生参考线可吸附；本次Alt/直接选择拖动产生的副本无来源标签，需选择全部Logo重新生成才会纳入。详细证据见[M6验收页](acceptance/M6.md)。
 
-仓库是本地main，无远程、无推送，dist和node_modules不入Git。用户可在自己的空仓库地址确定后自行执行：
+仓库使用本地 `main`，已绑定私有 GitHub 仓库 `https://github.com/diseno1210/logo-guides-illustrator`；每个里程碑完成后提交并推送，`dist` 和 `node_modules` 不入 Git。其他 agent 可基于 GitHub `main` 的提交和 `docs/STATUS.md` 审查：
 
 ```powershell
-git remote add origin <你的仓库地址>
-git push -u origin main
+git fetch origin
+git checkout main
+git pull --ff-only origin main
 ```
 
-远程已有提交时先整合历史。M6已完成第14.5节真实验收并交付v0.1；M7面板、M8 AI、M9签名安装继续遵循原顺序。
+M6已完成第14.5节真实验收并交付v0.1；M7面板、M8 AI、M9签名安装继续遵循原顺序。
