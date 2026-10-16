@@ -1,11 +1,11 @@
 # 开发状态
 
-更新日期：2026-10-16。首次交付仅 M0。状态：未开始 / 进行中 / 自动验证通过 / 待 Illustrator 实测 / 已验收。
+更新日期：2026-10-16。当前授权：在 M0 基础上推进开发，遇到规范要求的用户验收节点停下。状态：未开始 / 进行中 / 自动验证通过 / 待 Illustrator 实测 / 已验收。
 
 | 里程碑 | 状态 | 验证与提交 |
 | --- | --- | --- |
 | M0 | 已验收 | 48/48 测试通过；构建/ES3 通过；F1 JSON/SVG 预览一致；Chrome 截图已核对 |
-| M1 | 未开始 | M0 验收后另行启动 |
+| M1 | 待 Illustrator 实测 | 几何核心、F1–F10、DumpGeometry 和 Node 验证命令已实现；自动测试通过，等待用户真实导出 |
 | M2 | 未开始 | 依赖 M1，包括 DumpGeometry 实测 |
 | M3 | 未开始 | 依赖 M2，包括宿主绘制实测 |
 | M4 | 未开始 | 依赖 M3 |
@@ -36,8 +36,21 @@
 - Chrome 无头生成并实际查看 `dist/previews/F1.png`（640×640）：浅灰圆完整，四段连接无可见缺口，无变形或辅助图元。PNG SHA256：`350730D86E0884D7BADCCC52E7811B678D279B50F44CC3DE7D6B645CACC175C7`。
 - Node/Chrome 结果不代表 Illustrator 实测；M0 没有宿主功能实测要求。
 
-## 当前限制与 M1 前置条件
+## M1 自动验证记录
 
-尚未实现几何分析、Illustrator 操作、CEP 或 AI；M0 不要求 Illustrator 宿主功能实测。
+- 依据：原文 15 节 M1，实现 util/config/vec/bezier/geometry/sample/ink/rows、LG.json、host env/read 和 DumpGeometry。
+- 设置字段和参数数值由测试直接对照 DEV_PLAN 第 7 节；所有 core 均在移除禁用 API 的 vm 中运行。
+- 自动测试覆盖 M0 回归、解析几何、F1–F10（含 F9b）、复合孔洞、开放/描边、采样预算、文字临时轮廓失败清理、选区/activeLayer 恢复、RGB/CMYK、多画板、真实构建脚本的 mock 导出及 Node 读取。
+- `npm test`：83/83 通过，0 失败、0 跳过、0 todo；`npm run build` 和 `npm run check:es3` 通过。产物 `dist/scripts/LogoGuides_DumpGeometry.jsx` 和 `LogoGuides_Generate.jsx` 均为 ASCII ES3。
+- DumpGeometry JSX SHA256：`53FCCE198A9FC28B56FAB7D2E281B330D549E66F443FB2276ADDB6C249826273`。主规范迁移前 SHA256 保持不变。
+- F1–F10 汇总产物：`dist/validation/M1.fixtures.json`，每个夹具均有 `*.m1.json` 验证报告和 `dist/previews/*.svg` 原始几何预览。
+- F10：50 部件、2000 锚点、5 行、S=40、采样 20000，正常记录 SAMPLES_CAPPED。完整 analyze 尚未实现，因此不宣称通过 M4 的 <300ms 指标。
+- `npm run validate:geometry -- dist/previews/F1.geometry.json dist/validation/F1.m1.json` 已运行，报告有限数值；UTF-8 BOM 输入兼容由测试覆盖。
+- Chrome 无头生成并查看 `dist/validation/M1.gallery.png`：圆、环、矩形、X、椭圆、D、多行、I/O、50 圆布局与预期原始几何相符。尚无辅助图元识别结果。
+- 操作清单：[M1 用户验收](acceptance/M1.md)。真实 Illustrator 版本、导出 JSON、临时对象清理及 Node 验证结果均尚未取得；M1 不标为已验收。
 
-本次按用户范围停在 M0，不自动进入 M1。M1 已满足 M0 前置验收条件；另行启动后实现第 15 节规定的读取/归一化模块，并在进入 M2 前由用户验证 DumpGeometry 导出。
+## 当前限制与下一步
+
+M1 已实现几何基础与 Illustrator 选区导出；辅助线特征分析、绘制、CEP 和 AI 尚未实现。host 自动测试使用 DOM mock，不能替代真实 Illustrator 实测。
+
+按用户要求停在必须验收的 M1 节点。请在 Illustrator 运行 DumpGeometry 并反馈导出文件路径；真实 Node 读取及原对象/临时副本检查通过后，记录 M1 已验收，再进入 M2。当前不进入 M2。

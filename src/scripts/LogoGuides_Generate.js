@@ -1,2 +1,2 @@
-/* M0 build probe only. Does not read selection or modify Illustrator documents. */
-alert("Logo Guides M0: 目前仅提供开发工具链，尚未实现辅助线生成。");
+/* Generation starts in M2, after M1 DumpGeometry has passed user acceptance. */
+alert("Logo Guides M1: 请先运行 DumpGeometry 验收几何导出，尚未实现辅助线生成。");

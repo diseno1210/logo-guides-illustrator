@@ -20,7 +20,7 @@ test('F1 follows the Geometry contract and the exact four-cubic fixture', () => 
   assert.equal(geometry.parts[0].contours[0].closed, true);
   assert.deepEqual(points.map(p => p.a), [[100,0],[0,100],[-100,0],[0,-100]]);
   assert.equal(points[0].r[1], KAPPA * 100);
-  assert.throws(() => getFixture('F2'), /only implements fixture F1/);
+  assert.throws(() => getFixture('F99'), /Unknown fixture/);
 });
 
 test('geometry preview has exact y flip, two fixed groups, empty guides and no fake analysis', () => {

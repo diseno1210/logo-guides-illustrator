@@ -20,7 +20,7 @@ function contourPath(contour) {
   return data + (contour.closed ? ' Z' : '');
 }
 
-/** M0 geometry-only preview. Does not call a fake analyze or emit fake features. */
+/** Geometry-only preview until feature analysis lands. Never emits fake features. */
 function renderGeometry(geometry) {
   validateGeometry(geometry);
   const [left, top, right, bottom] = geometry.artboard;
@@ -30,8 +30,8 @@ function renderGeometry(geometry) {
     `    <path id="geometry-${part.sourceIndex}" d="${part.contours.map(contourPath).join(' ')}" fill="${part.filled ? '#D9D9D9' : 'none'}" fill-rule="evenodd" stroke="${part.stroked ? '#A0A0A0' : 'none'}" stroke-width="${part.strokeWidth}"/>`).join('\n');
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="${left} ${-top} ${width} ${height}" width="${width}pt" height="${height}pt">
-  <title>Logo Guides M0 — geometry-only preview</title>
-  <desc>Geometry preview only. Analysis and guide generation are not implemented in M0.</desc>
+  <title>Logo Guides — geometry-only preview</title>
+  <desc>Geometry preview only. Feature analysis and guide generation are not implemented yet.</desc>
   <g id="lg-geometry">
 ${shapes}
   </g>
@@ -53,7 +53,7 @@ if (require.main === module) {
   try {
     const args = process.argv.slice(2);
     if (!args[0] || (args.length > 1 && (args[1] !== '--out' || args.length !== 3))) throw new Error('Usage: npm run preview -- input.json|input.svg [--out output.svg]');
-    console.log('M0 geometry only: ' + preview(args[0], args[2]));
+    console.log('Geometry only: ' + preview(args[0], args[2]));
   } catch (error) { console.error(error.message); process.exitCode = 1; }
 }
 module.exports = { renderGeometry, contourPath, preview };

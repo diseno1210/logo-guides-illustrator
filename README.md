@@ -1,6 +1,6 @@
 # Logo 辅助线生成器
 
-面向 Adobe Illustrator 的 Logo / 字标辅助线工具。**M0 骨架与工具链已验收**，尚不能生成 Illustrator 辅助线；M1 未开始。
+面向 Adobe Illustrator 的 Logo / 字标辅助线工具。M0 已验收；**M1 几何核心与导出已实现，等待 Illustrator 实测**。尚不能生成辅助线。
 
 ## 开发入口
 
@@ -20,12 +20,13 @@ npm run build
 npm run check:es3
 npm run fixture -- F1
 npm run preview -- dist/previews/F1.geometry.json
+npm run validate:geometry -- <导出的geometry_dump.json路径>
 ```
 
 当前 Codex 环境没有全局 npm：使用内置 pnpm 的 `pnpm dlx npm@10.9.4 <命令>` 替代 `npm <命令>`，不安装全局工具。详细命令见使用说明。
 
 ## 仓库与交付
 
-本地 `main` 分支，尚未连接远程仓库。源码、文档、测试和 `package-lock.json` 入库；`node_modules/`、`dist/`、日志和密钥不入库。构建入口为 M0 提示脚本，不读取或绘制文档。
+本地 `main` 分支，尚未连接远程仓库。源码、文档、测试和 `package-lock.json` 入库；`node_modules/`、`dist/`、日志和密钥不入库。DumpGeometry 可读取选区并导出 JSON；Generate 仍为阶段提示。
 
-本次仅交付 M0，验收后停在 M0，不自动进入 M1。
+当前停在原规范 M1 的用户实测门槛。请按 [M1 验收步骤](docs/acceptance/M1.md) 验证，确认后继续 M2。

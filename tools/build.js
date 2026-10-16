@@ -19,7 +19,7 @@ function asciiEscape(source) {
   return source.replace(/[^\x00-\x7f]/g, char => '\\u' + char.charCodeAt(0).toString(16).padStart(4, '0'));
 }
 
-/** Build probe scripts only; no CEP products are emitted before M7. */
+/** Build milestone entrypoints; no CEP products are emitted before M7. */
 function build(output = path.join(ROOT, 'dist', 'scripts')) {
   const shared = [...sourceFiles(path.join(ROOT, 'src', 'core')), ...sourceFiles(path.join(ROOT, 'src', 'host'))];
   const entries = sourceFiles(path.join(ROOT, 'src', 'scripts'));

@@ -12,7 +12,10 @@ const { checkSource } = require('../check_es3');
 
 test('shared core loads with every contract-banned API removed and no host objects', () => {
   const { context, LG, plain } = loadCore();
-  assert.deepEqual(plain(LG), { version: '0.0.0-dev', milestone: 'M0' });
+  assert.equal(LG.version, '0.0.0-dev');
+  assert.equal(LG.milestone, 'M1');
+  assert.equal(typeof LG.geometry.normalize, 'function');
+  assert.equal(typeof LG.json.stringify, 'function');
   const values = vm.runInContext(`
     [typeof [].map, typeof [].indexOf, typeof Object.keys, typeof Array.isArray,
      typeof ''.trim, typeof Function.prototype.bind, typeof JSON, typeof Promise,
@@ -33,12 +36,14 @@ test('ASCII escaping preserves literal Unicode including surrogate pairs', () =>
   assert.equal(vm.runInNewContext(source + 'x;'), '中文 🎨');
 });
 
-test('build is deterministic, ES3/ASCII, and the M0 script only reports stage status', t => {
+test('build is deterministic, ES3/ASCII, and Generate still only reports stage status', t => {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'logo-guides-build-'));
   t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
   const products = build(directory);
-  assert.equal(products.length, 1);
-  const source = fs.readFileSync(products[0], 'utf8');
+  assert.equal(products.length, 2);
+  for(const product of products)assert.deepEqual(checkSource(fs.readFileSync(product,'utf8')),[]);
+  const generated = products.find(file=>file.endsWith('LogoGuides_Generate.jsx'));
+  const source = fs.readFileSync(generated, 'utf8');
   assert.ok(source.startsWith('#target illustrator\n(function () {'));
   assert.ok(!/[^\x00-\x7f]/.test(source));
   assert.deepEqual(checkSource(source), []);
@@ -47,8 +52,8 @@ test('build is deterministic, ES3/ASCII, and the M0 script only reports stage st
   Object.defineProperty(sandbox, 'app', { get() { throw new Error('M0 must not access Illustrator'); } });
   vm.runInNewContext(source.replace(/^#target illustrator\n/, ''), sandbox, { timeout: 1000 });
   assert.equal(messages.length, 1);
-  assert.match(messages[0], /M0.*尚未实现/);
+  assert.match(messages[0], /M1.*尚未实现/);
   assert.equal(sandbox.LG, undefined);
   build(directory);
-  assert.equal(fs.readFileSync(products[0], 'utf8'), source);
+  assert.equal(fs.readFileSync(generated, 'utf8'), source);
 });
