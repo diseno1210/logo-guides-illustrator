@@ -47,16 +47,17 @@ LG.hostDraw = (function () {
         var completed = false; var layers = {}; var used = {}; var styles = LG.styles.preset(settings.stylePreset); var i; var key; var primitive; var item; var data;
         // Validate supported primitives and existing metadata before deleting old automatic output.
         LG.hostStore.read(doc);
-        U.each(result.render.primitives, function (p) { if ((p.type !== "line" && p.type !== "label") || !U.has(names, p.layer)) { throw new Error("Unsupported M2 primitive"); } used[p.layer] = true; if (p.type === "line" && settings.output !== "styled") { used.snapGuides = true; } });
+        U.each(result.render.primitives, function (p) { if ((p.type !== "line" && p.type !== "label" && p.type!=="polygon") || !U.has(names, p.layer)) { throw new Error("Unsupported primitive"); } if(p.type!=="line"||settings.output!=="guides"){used[p.layer] = true;} if (p.type === "line" && settings.output !== "styled") { used.snapGuides = true; } });
         if (!root) { root = doc.layers.add(); root.name = "Logo Guides"; }
         try {
             root.locked = false; root.visible = true; root.zOrder(ZOrderMethod.BRINGTOFRONT);
             for (i = root.layers.length - 1; i >= 0; i -= 1) { if (root.layers[i].name !== "LG Manual") { root.layers[i].locked = false; root.layers[i].remove(); } }
             for (i = doc.layers.length - 1; i >= 0; i -= 1) { if (doc.layers[i].name === "Logo Guides BG") { doc.layers[i].locked = false; doc.layers[i].remove(); } }
-            for (i = order.length - 1; i >= 0; i -= 1) { key = order[i]; if (used[key] && (key !== "baselines" && key !== "visualLines" || settings.output !== "guides")) { layers[key] = root.layers.add(); layers[key].name = names[key]; } }
+            for (i = order.length - 1; i >= 0; i -= 1) { key = order[i]; if (used[key]) { layers[key] = root.layers.add(); layers[key].name = names[key]; } }
             for (i = 0; i < result.render.primitives.length; i += 1) {
                 primitive = result.render.primitives[i];
                 if (primitive.type === "label") { label(layers[primitive.layer], primitive, result.render, styles, settings, doc); }
+                else if(primitive.type==="polygon"){item=layers[primitive.layer].pathItems.add();item.setEntirePath(primitive.points);item.closed=primitive.closed;item.name=primitive.featureId;style(item,styles[primitive.style],result.render.strokeUnit,doc);}
                 else {
                     if (settings.output !== "guides") { item = layers[primitive.layer].pathItems.add(); item.setEntirePath([primitive.p0, primitive.p1]); item.name = primitive.featureId; style(item, styles[primitive.style], result.render.strokeUnit, doc); }
                     if (settings.output !== "styled") { item = layers.snapGuides.pathItems.add(); item.setEntirePath([primitive.p0, primitive.p1]); item.name = primitive.featureId; item.filled = false; item.stroked = false; item.guides = true; }

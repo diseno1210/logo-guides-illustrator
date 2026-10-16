@@ -1,6 +1,6 @@
 # Logo 辅助线生成器
 
-面向 Adobe Illustrator 的 Logo / 字标辅助线工具。**M0、M1 已验收；M2 自动验证通过，待 Illustrator 参考线绘制实测**。临时 Generate 仅生成参考线，尺寸标注、圆、角度及完整交互在后续里程碑实现。
+面向 Adobe Illustrator 的 Logo / 字标辅助线工具。**M0–M2 已验收，M3 自动验收通过，M4 开发中**。临时 Generate 已包含参考线、笔画/间距与倍率标注；圆、角度及完整交互继续按里程碑实现。
 
 ## 开发入口
 

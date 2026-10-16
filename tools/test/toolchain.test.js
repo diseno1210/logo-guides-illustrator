@@ -13,7 +13,7 @@ const { checkSource } = require('../check_es3');
 test('shared core loads with every contract-banned API removed and no host objects', () => {
   const { context, LG, plain } = loadCore();
   assert.equal(LG.version, '0.0.0-dev');
-  assert.equal(LG.milestone, 'M2');
+  assert.equal(LG.milestone, 'M3');
   assert.equal(typeof LG.geometry.normalize, 'function');
   assert.equal(typeof LG.json.stringify, 'function');
   const values = vm.runInContext(`
@@ -24,7 +24,7 @@ test('shared core loads with every contract-banned API removed and no host objec
   `, context);
   assert.ok(Array.from(values).every(value => value === 'undefined'));
   assert.equal(typeof LG.analyze, 'function');
-  assert.equal(typeof LG.preAnalyze, 'undefined');
+  assert.equal(typeof LG.preAnalyze, 'function');
   assert.throws(() => vm.runInContext('[1,2].indexOf(2)', context), /not a function/);
   assert.throws(() => vm.runInContext('JSON.parse("{}")', context));
 });

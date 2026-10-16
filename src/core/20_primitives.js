@@ -9,7 +9,9 @@ LG.primitives = (function () {
     function references(model, render) {
         var registry = new LG.lines.LineRegistry(model.derived.tolPos);
         LG.util.each(model.referenceLines, function (item) { if (LG.lines.enabled(item, model.config.settings)) { registry.register(item.orient, item.pos, item.span, item.category, item.id); } });
-        render.primitives = LG.util.mapArr(registry.lines, line); return render;
+        LG.util.each(render.dimensionLines||[],function(item){registry.register(item.orient,item.pos,item.span,item.category,item.id);});
+        LG.util.each(registry.lines,function(item){if(item.orient==="h"){item.span=[Math.min(item.span[0],render.guideArea[0]),Math.max(item.span[1],render.guideArea[2])];}});
+        render.primitives = LG.util.mapArr(registry.lines, line).concat(render.primitives); delete render.dimensionLines; return render;
     }
     return { line: line, label: label, references: references };
 }());

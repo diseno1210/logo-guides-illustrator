@@ -52,20 +52,20 @@ function harness(){
 }
 
 test('Generate draws references, stores hidden Doc Data, tags sources, locks layer and restores activeLayer/selection',()=>{
-  const {LG,plain,doc,artwork}=harness();const sources=doc.selection;const settings=LG.config.defaults();const result=LG.analyze(F3());
+  const {LG,plain,doc,artwork}=harness();const sources=doc.selection;const settings=LG.config.defaults();const result=LG.analyze(F3(),{features:{stemWidths:false,gaps:false}});
   const data=plain(LG.hostDraw.generate(doc,result,settings,sources));
   const root=doc.layers[0];assert.equal(root.name,'Logo Guides');assert.equal(root.locked,true);assert.equal(doc.activeLayer,artwork);assert.equal(doc.selection,sources);
   assert.deepEqual(root.layers.map(l=>l.name),['LG Baselines']);
   const drawn=root.layers[0].pathItems;assert.equal(drawn.length,8);
   for(let i=0;i<drawn.length;i++){assert.equal(drawn[i].name,result.render.primitives[i].featureId);assert.equal(drawn[i].strokeWidth,0.25);assert.deepEqual(plain(drawn[i].strokeDashes),[0.75,0.5]);assert.equal(drawn[i].filled,false);}
   const stored=root.pathItems[0];assert.equal(stored.name,'__LG_DATA__');assert.equal(stored.hidden,true);assert.deepEqual(JSON.parse(stored.note),data);
-  assert.equal(data.schemaVersion,1);assert.match(data.runId,/^lg_/);assert.equal(data.baseUnit.value,null);assert.equal(data.baseUnit.locked,false);assert.deepEqual(data.hiddenFeatures,[]);
+  assert.equal(data.schemaVersion,1);assert.match(data.runId,/^lg_/);assert.equal(data.baseUnit.value,20);assert.equal(data.baseUnit.locked,true);assert.deepEqual(data.hiddenFeatures,[]);
   for(const source of sources){assert.equal(source.tags.find(t=>t.name==='LG_SOURCE').value,data.runId);assert.ok(source.tags.some(t=>t.name==='OTHER_TAG'));}
   assert.deepEqual(plain(LG.hostStore.read(doc)),data);
 });
 
 test('repeated Generate replaces automatic sublayers, keeps Manual and data path, clears old source tags only',()=>{
-  const {LG,doc}=harness();const settings=LG.config.defaults();const sources=doc.selection;const result=LG.analyze(F3());
+  const {LG,doc}=harness();const settings=LG.config.defaults();const sources=doc.selection;const result=LG.analyze(F3(),{features:{stemWidths:false,gaps:false}});
   const first=LG.hostDraw.generate(doc,result,settings,sources);const root=doc.layers[0];const dataPath=root.pathItems[0];const oldBaselines=root.layers[0];
   root.locked=false;const manual=root.layers.add();manual.name='LG Manual';root.locked=true;const differentSource=[sources[1]];
   const second=LG.hostDraw.generate(doc,result,settings,differentSource);
@@ -74,14 +74,14 @@ test('repeated Generate replaces automatic sublayers, keeps Manual and data path
 });
 
 test('drawing failure restores prior root lock, active layer and selected artwork',()=>{
-  const {LG,doc,artwork,state}=harness();const sources=doc.selection;const settings=LG.config.defaults();const result=LG.analyze(F3());
+  const {LG,doc,artwork,state}=harness();const sources=doc.selection;const settings=LG.config.defaults();const result=LG.analyze(F3(),{features:{stemWidths:false,gaps:false}});
   LG.hostDraw.generate(doc,result,settings,sources);state.failDrawing=true;
   assert.throws(()=>LG.hostDraw.generate(doc,result,settings,sources),/drawing failure/);
   assert.equal(doc.layers[0].locked,true);assert.equal(doc.activeLayer,artwork);assert.equal(doc.selection,sources);
 });
 
 test('invalid document metadata is rejected before deleting prior output',()=>{
-  const {LG,doc}=harness();const sources=doc.selection;const settings=LG.config.defaults();const result=LG.analyze(F3());
+  const {LG,doc}=harness();const sources=doc.selection;const settings=LG.config.defaults();const result=LG.analyze(F3(),{features:{stemWidths:false,gaps:false}});
   LG.hostDraw.generate(doc,result,settings,sources);const root=doc.layers[0];const before=Array.from(root.layers);root.pathItems[0].note='invalid';
   assert.throws(()=>LG.hostDraw.generate(doc,result,settings,sources),/document data/);assert.deepEqual(Array.from(root.layers),before);assert.equal(root.locked,true);
 });
@@ -97,12 +97,12 @@ test('RGB/CMYK conversion includes pure black without division by zero',()=>{
   const {LG,doc}=harness();let c=LG.hostDraw.color('#E5484D',doc);assert.equal(c.red,229);assert.equal(c.green,72);assert.equal(c.blue,77);
   doc.documentColorSpace=1;c=LG.hostDraw.color('#000000',doc);assert.equal(c.black,100);assert.equal(c.cyan,0);assert.equal(c.magenta,0);assert.equal(c.yellow,0);
   c=LG.hostDraw.color('#FFFFFF',doc);assert.equal(c.black,0);assert.equal(c.cyan,0);
-  const settings=LG.config.defaults();LG.hostDraw.generate(doc,LG.analyze(F3()),settings,doc.selection);
-  assert.ok(Number.isFinite(doc.layers[0].layers[0].pathItems[0].strokeColor.black));
+  const settings=LG.config.defaults();LG.hostDraw.generate(doc,LG.analyze(F3(),{features:{stemWidths:false,gaps:false}}),settings,doc.selection);
+  assert.ok(Number.isFinite(doc.layers[0].layers.find(l=>l.name==='LG Baselines').pathItems[0].strokeColor.black));
 });
 
 test('multiline labels use font fallbacks, actual group bounds and -90 rotation about center',()=>{
-  const {LG,doc,artwork,fontLookups}=harness();const result=LG.analyze(F3());
+  const {LG,doc,artwork,fontLookups}=harness();const result=LG.analyze(F3(),{features:{stemWidths:false,gaps:false}});
   const primitive=LG.primitives.label([50,180],-90,[{text:'0.95a',sizeFactor:1,style:'text'},{text:'实测 +0.12pt',sizeFactor:0.75,style:'textWarn'}],'S1');
   const group=LG.hostDraw.label(artwork,primitive,result.render,LG.styles.preset('light'),LG.config.defaults(),doc);
   const b=group.geometricBounds;assert.ok(Math.abs((b[0]+b[2])/2-50)<1e-9);assert.ok(Math.abs((b[1]+b[3])/2-180)<1e-9);
@@ -116,6 +116,6 @@ test('multiline labels use font fallbacks, actual group bounds and -90 rotation 
 test('built Generate executes the actual read/analyze/draw/store flow in the ES3 DOM double',()=>{
   const {context,doc,artwork,alerts,files}=harness();const target=build().find(file=>file.endsWith('LogoGuides_Generate.jsx'));
   vm.runInContext(fs.readFileSync(target,'utf8').replace(/^#target illustrator\n/,''),context,{timeout:5000});
-  assert.equal(doc.activeLayer,artwork);assert.equal(doc.layers[0].name,'Logo Guides');assert.equal(doc.layers[0].layers[0].pathItems.length,8);
-  assert.ok(alerts.some(m=>/Reference lines generated: 8/.test(m)));assert.ok(files.get('/mock/LogoGuides/log.txt').includes('M2 Generate OK'));
+  assert.equal(doc.activeLayer,artwork);assert.equal(doc.layers[0].name,'Logo Guides');assert.equal(doc.layers[0].layers.find(l=>l.name==='LG Baselines').pathItems.length,8);
+  assert.ok(alerts.some(m=>/Reference lines generated: 8/.test(m)));assert.ok(files.get('/mock/LogoGuides/log.txt').includes('M3 Generate OK'));
 });

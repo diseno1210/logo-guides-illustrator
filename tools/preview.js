@@ -57,6 +57,7 @@ function renderAnalysis(geometry, settings = {}, suppliedResult) {
   };
   const guides = render.primitives.map(p => {
     if (p.type === 'line') return `    <path data-feature="${escapeXml(p.featureId)}" d="M ${pointText(p.p0)} L ${pointText(p.p1)}" ${styleAttributes(p.style)}/>`;
+    if(p.type==='polygon')return `    <path data-feature="${escapeXml(p.featureId)}" d="M ${p.points.map(pointText).join(' L ')}${p.closed?' Z':''}" ${styleAttributes(p.style)}/>`;
     if (p.type === 'label') {
       const total = p.lines.reduce((sum, line) => sum + 1.2 * render.fontSize * line.sizeFactor, 0);
       let cursor = -total / 2;

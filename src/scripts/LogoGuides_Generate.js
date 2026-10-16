@@ -6,6 +6,7 @@ try {
     var geometry = LG.hostRead.selection(doc, settings);
     var result = LG.analyze(geometry, settings);
     var data = LG.hostDraw.generate(doc, result, settings, sources);
-    LG.hostEnv.log("M2 Generate OK; runId=" + data.runId + "; lines=" + result.render.primitives.length);
-    alert("Logo Guides M2：已生成参考线 / Reference lines generated: " + result.render.primitives.length + "\n警告 / Warnings: " + result.analysis.warnings.length + "\n当前仅参考线；笔画、倍率、圆与完整交互尚未实现。");
+    var lineCount=LG.util.filterArr(result.render.primitives,function(p){return p.type==="line";}).length;
+    LG.hostEnv.log("M3 Generate OK; runId=" + data.runId + "; lines=" + lineCount);
+    alert("Logo Guides M3：参考线 / Reference lines generated: " + lineCount + "\na = " + result.analysis.baseUnit.value.toFixed(3) + " pt (" + result.analysis.baseUnit.source + ")\n警告 / Warnings: " + result.analysis.warnings.length + "\n已含笔画与倍率标注；圆、角度与完整交互尚未实现。");
 } catch (error) { LG.hostEnv.report(error); }

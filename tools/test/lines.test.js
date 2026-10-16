@@ -8,7 +8,7 @@ const { getFixture, geometry, rectangle, circlePart } = require('./fixtures');
 const { loadGeometry, importSvg } = require('../svg_import');
 const { renderAnalysis } = require('../preview');
 const { LG, plain } = loadCore();
-const analyze = (g, settings) => plain(LG.analyze(g, settings));
+const analyze = (g, settings={}) => plain(LG.analyze(g, {...settings,features:{stemWidths:false,gaps:false,...settings.features}}));
 const horizontal = r => r.analysis.lines.filter(l => l.orient === 'h');
 const classes = r => horizontal(r).map(l => [l.pos, l.category, l.subtype]);
 
@@ -113,7 +113,7 @@ test('layout uses margin/artboard and supporting-row vertical spans before M3 la
   assert.deepEqual(verticals.find(l=>l.pos===160).span,[-fs,100+fs]);
   assert.deepEqual(analyze(g,{extendTo:'artboard'}).render.guideArea,g.artboard);
   assert.throws(()=>analyze(g,{marginFactor:1e308}),/finite coordinate range/);
-  assert.equal(result.analysis.baseUnit.value,null);assert.equal(result.analysis.baseUnit.source,null);
+  assert.equal(result.analysis.baseUnit.value,20);assert.equal(result.analysis.baseUnit.source,'auto-stem');
   assert.equal(analyze(g,{baseUnit:{mode:'value',value:12}}).analysis.baseUnit.value,12);
 });
 
@@ -129,9 +129,9 @@ test('appendix B presets and label primitives preserve exact values without auto
 });
 
 test('F11 preview/import analyzes the same F3 geometry without reading its reference graphics', () => {
-  const g=getFixture('F3');const initial=analyze(g);const svg=renderAnalysis(g);const imported=importSvg(svg);
+  const g=getFixture('F3');const initial=plain(LG.analyze(g));const svg=renderAnalysis(g);const imported=importSvg(svg);
   assert.equal(imported.parts.length,3);
-  assert.deepEqual(analyze(imported).analysis,initial.analysis);
+  assert.deepEqual(plain(LG.analyze(imported)).analysis,initial.analysis);
   assert.match(svg,/id="lg-geometry"/);assert.match(svg,/id="lg-guides"/);
   const label=plain(LG.primitives.label([20,30],-90,[{text:'<1a & 中文',sizeFactor:1,style:'text'}],'S1'));
   const withLabel=structuredClone(initial);withLabel.render.primitives.push(label);
@@ -142,7 +142,7 @@ test('real BOATCHIN export passes the shared core without inventing later milest
   const g=loadGeometry(path.resolve(__dirname,'../samples/illustrator-boatchin.geometry.json'));
   const model=LG.geometry.normalize(g);assert.equal(model.anchorCount,205);assert.equal(model.parts.length,9);assert.equal(model.rows.length,2);
   const result=analyze(g);assert.ok(result.analysis.lines.length>0);assert.deepEqual(result.analysis.warnings,[]);
-  for(const key of ['stems','gaps','circles','rings','angles','ratioFindings'])assert.deepEqual(result.analysis[key],[]);
+  for(const key of ['circles','rings','angles','ratioFindings'])assert.deepEqual(result.analysis[key],[]);
   assert.ok(!/NaN|Infinity/.test(JSON.stringify(result)));assert.ok(!/NaN|Infinity/.test(renderAnalysis(g)));
   const ids=Array.from(renderAnalysis(g).matchAll(/\bid="([^"]+)"/g),m=>m[1]);assert.equal(new Set(ids).size,ids.length);
 });
