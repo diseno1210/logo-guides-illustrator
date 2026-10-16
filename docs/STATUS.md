@@ -66,6 +66,8 @@ M1 几何基础与实际选区导出已验收。M2 参考线分析、基础绘�
 
 ## M2 自动验证记录（2026-10-16）
 
+- 实现提交：`49dd8fe`，`feat: implement M2 reference analysis and Illustrator drawing`。该提交代表自动验证完成，M2 尚未通过真实 Illustrator 绘制验收。
+- 构建脚本 SHA256：Generate=`C50830AFEF980CB5AC15FAA015E5ED1BCD8DC217F7C6884F05C6453D1D05041B`；DumpGeometry=`5C85A48BAF626B131C59D8EAA823A37888D0A4D7EA904A1EAE3141EB3D9F93FC`。依赖与锁文件未变，无新增远程仓库或推送。
 - 依据第 15 节 M2；实现 core/09、11、12、18、19、20、21 和 host/h03、h04；入口 Generate 暂用默认设置。数据契约、参数表与主规范正文均不修改。
 - `npm test`：105/105 通过（83 项回归 + 22 项 M2 专项），0 失败、0 跳过、0 todo。使用移除禁用 API 的同一份 core；构建产物通过 ASCII/ES3 检查。
 - `npm run build` 与 `npm run check:es3`：两份脚本均通过。Generate 的实际构建入口在 DOM mock 中执行完整 read/analyze/draw/store 流程，生成矩形夹具的 8 条线、隐藏数据和来源标签，并恢复原图层。此项不等于 Illustrator 实测。
