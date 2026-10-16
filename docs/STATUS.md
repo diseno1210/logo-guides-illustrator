@@ -38,6 +38,7 @@
 
 ## M1 自动验证记录
 
+- 实现提交：`ad37aeb`，`feat: implement M1 geometry foundations and dump acceptance script`。本提交表示自动验证完成，尚未通过真实 Illustrator 验收。
 - 依据：原文 15 节 M1，实现 util/config/vec/bezier/geometry/sample/ink/rows、LG.json、host env/read 和 DumpGeometry。
 - 设置字段和参数数值由测试直接对照 DEV_PLAN 第 7 节；所有 core 均在移除禁用 API 的 vm 中运行。
 - 自动测试覆盖 M0 回归、解析几何、F1–F10（含 F9b）、复合孔洞、开放/描边、采样预算、文字临时轮廓失败清理、选区/activeLayer 恢复、RGB/CMYK、多画板、真实构建脚本的 mock 导出及 Node 读取。
