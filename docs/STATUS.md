@@ -5,8 +5,8 @@
 | 里程碑 | 状态 | 验证与提交 |
 | --- | --- | --- |
 | M0 | 已验收 | 48/48 测试通过；构建/ES3 通过；F1 JSON/SVG 预览一致；Chrome 截图已核对 |
-| M1 | 待 Illustrator 实测 | 几何核心、F1–F10、DumpGeometry 和 Node 验证命令已实现；自动测试通过，等待用户真实导出 |
-| M2 | 未开始 | 依赖 M1，包括 DumpGeometry 实测 |
+| M1 | 已验收 | BOATCHIN 真实 Illustrator 导出经 Node 读取和 Chrome 预览核对通过 |
+| M2 | 进行中 | 实施参考线与基础绘制，下一门槛为用户验证 Illustrator 基准线绘制 |
 | M3 | 未开始 | 依赖 M2，包括宿主绘制实测 |
 | M4 | 未开始 | 依赖 M3 |
 | M5 | 未开始 | 依赖 M4 |
@@ -48,10 +48,17 @@
 - F10：50 部件、2000 锚点、5 行、S=40、采样 20000，正常记录 SAMPLES_CAPPED。完整 analyze 尚未实现，因此不宣称通过 M4 的 <300ms 指标。
 - `npm run validate:geometry -- dist/previews/F1.geometry.json dist/validation/F1.m1.json` 已运行，报告有限数值；UTF-8 BOM 输入兼容由测试覆盖。
 - Chrome 无头生成并查看 `dist/validation/M1.gallery.png`：圆、环、矩形、X、椭圆、D、多行、I/O、50 圆布局与预期原始几何相符。尚无辅助图元识别结果。
-- 操作清单：[M1 用户验收](acceptance/M1.md)。真实 Illustrator 版本、导出 JSON、临时对象清理及 Node 验证结果均尚未取得；M1 不标为已验收。
+- 操作清单：[M1 用户验收](acceptance/M1.md)。后续取得的实测证据见下节。
 
 ## 当前限制与下一步
 
 M1 已实现几何基础与 Illustrator 选区导出；辅助线特征分析、绘制、CEP 和 AI 尚未实现。host 自动测试使用 DOM mock，不能替代真实 Illustrator 实测。
 
-按用户要求停在必须验收的 M1 节点。请在 Illustrator 运行 DumpGeometry 并反馈导出文件路径；真实 Node 读取及原对象/临时副本检查通过后，记录 M1 已验收，再进入 M2。当前不进入 M2。
+## M1 真实 Illustrator 验证（2026-10-16）
+
+- 用户截图显示 BOATCHIN 选区导出成功：9 部件、0 警告；本机读取 `%APPDATA%/LogoGuides/geometry_dump.json`（74800 字节）。此前无选区时报错是正常保护，后续导出成功。
+- 原始样本保存在 `tools/samples/illustrator-boatchin.geometry.json`，SHA256：`381999A50338F6FD452DC1E32BB7A7E2A792728D6D969476796BA2ADFB0CCAFC`。
+- `node tools/validate_geometry.js tools/samples/illustrator-boatchin.geometry.json dist/validation/illustrator-m1.json` 退出 0：9 部件、21 轮廓、205 锚点、2 行、2582 采样，S=93.11435022375002，D=223.37563392497097，warnings=[]。
+- `node tools/preview.js tools/samples/illustrator-boatchin.geometry.json --out dist/previews/illustrator-m1.svg` 退出 0；Chrome 无头截图 `dist/previews/illustrator-m1.png` 已实际查看，外形、文字孔洞及方向与用户截图相符。
+- 此证据满足第 15 节 M1“DumpGeometry 导出的 JSON 能被 Node 读取（用户验证）”，可进入 M2。
+- 未取得 Illustrator 具体版本、未转曲文字清理、CMYK 和撤销的实测证据；继续留在第 14.5 节完整清单，不记为通过。M1 操作页的扩展建议不额外增加原文门槛。
