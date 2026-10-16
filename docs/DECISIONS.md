@@ -96,7 +96,7 @@ M6最终文件布局与第5节六个host编号一致：手动圆边界归入h04_
 
 Illustrator 30.0.0中，使用同份core/host打开真实生成窗口、按Enter生成后，通过Computer Use实际按一次Ctrl+Z：原生对象数20→2、Logo Guides根层消失、LG_SOURCE标签数2→0；原来的矩形与圆保留。此次生成在COM单次脚本调用中执行，观察到整次撤销，不泛化为所有Illustrator版本或其他入口的承诺。证据见M6验收页的before/after-undo.json。
 
-原生Illustrator DOM的GroupItem.duplicate()实际复制LG_SOURCE；刷新来源3→4，副本参与分析。这是原生DOM证据，不是替身，但不等于已完成第12项指定的Alt/Option拖动。Alt拖动与原生guides拖动吸附仍待记录；M6没有最终验收。
+原生Illustrator DOM的GroupItem.duplicate()实际复制LG_SOURCE；刷新来源3→4，副本参与分析。之后用户确认“已完成，能吸附”，实际Alt/直接选择拖动后来源层有4条PathItem：原圆/矩形的2个LG_SOURCE保留，2个变形副本无标签，刷新仍只读取2个原来源，a=20与runId不变。此次交互副本与此前GroupItem.duplicate行为不同，不将不同类型/操作等同；希望副本参与分析时重新选择全部Logo运行生成。用户随后移动带标签原圆，右侧锚点(320,250)→(316.5966258,250)，实际刷新图元13→20且a/runId不变，完成第4项与M6验收。
 
 ## D018 — 原生探针及失效图层引用（2026-10-16）
 

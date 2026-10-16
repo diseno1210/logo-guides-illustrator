@@ -12,7 +12,7 @@ const { checkSource } = require('../check_es3');
 
 test('shared core loads with every contract-banned API removed and no host objects', () => {
   const { context, LG, plain } = loadCore();
-  assert.equal(LG.version, '0.0.0-dev');
+  assert.equal(LG.version, require('../../package.json').version);
   assert.equal(LG.milestone, 'M6');
   assert.equal(typeof LG.geometry.normalize, 'function');
   assert.equal(typeof LG.json.stringify, 'function');

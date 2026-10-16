@@ -1,9 +1,11 @@
 {
   "name": "logo-guides",
-  "version": "0.0.0-dev",
+  "version": "0.1.0",
   "private": true,
-  "description": "Illustrator logo construction guides — M6 scripts awaiting host acceptance",
-  "engines": { "node": ">=20" },
+  "description": "Illustrator logo construction guides — v0.1 scripts",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "build": "node tools/build.js",
     "test": "node tools/run_tests.js",
