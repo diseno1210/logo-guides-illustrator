@@ -1,79 +1,148 @@
 # 使用说明
 
-当前进度M5：参考线、测量、圆/环/偏差、角度/构造线/吸附目标线、实际图例已自动验收；可选安全区/背景默认关闭。Generate仍使用默认设置，完整对话框/Refresh/Clear正在M6整合。复杂Logo超过maxLanes时输出LABEL_LANES_FULL，末车道可能重叠。
+当前为M6开发构建，自动验证通过，等待[第14.5节 Illustrator 实测](acceptance/M6.md)。M0–M5已满足各自里程碑门槛；M1/M2有真实导出/绘制证据。尚未发布v0.1，CEP面板、AI与ZXP未实现。
 
-CircleFromSelection已构建：用直接选择工具选中至少3个锚点后运行同名jsx，圆和半径/选中点最大偏差写入LG Manual。有文档a时显示倍率，否则显示pt。刷新保留手动结果的实际宿主行为在M6第14.5节验收。面板与AI未实现。
+## 安装与运行
 
-## 开发命令
-
-安装 Node 20+ 和 npm 10 后，在项目根目录执行：
+先在项目根目录构建：
 
 ```powershell
 npm ci
 npm test
 npm run build
 npm run check:es3
-npm run fixture -- F1
-npm run preview -- dist/previews/F1.geometry.json
-npm run preview -- dist/previews/F1.svg --out dist/previews/F1.roundtrip.svg
-npm run validate:geometry -- "导出文件实际路径" dist/validation/illustrator-m1.json
-node tools/validate_references.js
-npm run fixture -- tools/samples/illustrator-boatchin.geometry.json
 ```
 
-当前机器的 npm 替代入口（仅此环境需要）：
+需要Node20+和npm10；Illustrator运行构建后的JSX时不需要Node或依赖。六份脚本在`dist/scripts/`，可以直接从Illustrator“文件 › 脚本 › 其他脚本”选择运行。
 
-```powershell
-$pnpmPath = 'C:\Users\disen\.cache\codex-runtimes\codex-primary-runtime\dependencies\bin\fallback\pnpm.cmd'
-& $pnpmPath dlx npm@10.9.4 ci
-& $pnpmPath dlx npm@10.9.4 test
-& $pnpmPath dlx npm@10.9.4 run build
-& $pnpmPath dlx npm@10.9.4 run check:es3
-& $pnpmPath dlx npm@10.9.4 run fixture -- F1
-```
-
-dist 为可重新生成的输出目录，不入 Git。DumpGeometry 导出选区；临时 Generate 绘制参考线。preview 和 fixture 现在运行真实阶段 analyze，按样式叠加参考线，并跳过辅助组的再次导入。fixture 输出 geometry.json、SVG 和 analysis.json；既可输入 F1–F10（含 F9b），也可输入真实 JSON/SVG 文件。
-
-SVG 导入支持 path、rect（含圆角）、circle、ellipse、polygon、polyline、line，以及 transform。跳过 lg-guides；不展开文本、use、外部 CSS、剪切或蒙版，相关内容会跳过或警告。非法变换/数值/嵌套 viewport 会报错。viewBox 的数值坐标按 pt 使用；不根据根 width/height 二次缩放。无单位/px 数值按 1pt，显式物理单位换算；与浏览器截图的 CSS px 比例不同，详见 DECISIONS.md D005。
-
-预览检查命令（Chrome 参数路径可按本机调整）：
-
-```powershell
-$previewFile = (Resolve-Path 'dist/previews/F1.svg').Path
-$previewUrl = ([System.Uri]$previewFile).AbsoluteUri
-$previewPng = Join-Path (Get-Location).Path 'dist/previews/F1.png'
-$previewProfile = Join-Path (Get-Location).Path 'dist/chrome-profile'
-& 'C:\Program Files\Google\Chrome\Application\chrome.exe' --headless --disable-gpu --no-first-run --hide-scrollbars --force-device-scale-factor=1 --window-size=640,640 --user-data-dir=$previewProfile --screenshot=$previewPng $previewUrl
-```
-
-Chrome 可能异步结束写图，应确认 PNG 存在后再打开查看。M2 汇总页面位于 `dist/validation/m2/gallery.html`，使用同样方式截图检查。基准线颜色严格使用默认 dark 样式，在白底上较浅；没有启用背景板，不自动添加背景。
-
-## Illustrator 安装与运行
-
-当前可运行 DumpGeometry 与临时 Generate。Generate 的真实绘制待用户按 M2 清单实测。
+若需要固定出现在菜单中，将六份JSX复制到以下目录并重启Illustrator：
 
 - Windows：`C:\Program Files\Adobe\Adobe Illustrator 版本\Presets\zh_CN\脚本`。
 - macOS：`/Applications/Adobe Illustrator 版本/Presets.localized/zh_CN/脚本`。
-- 放入发布脚本并重启后，可从“文件 › 脚本”运行；也可“文件 › 脚本 › 其他脚本”选择 JSX。
-- 正式功能就绪后，可在动作面板通过“插入菜单项”记录脚本，再为动作设置快捷键；具体行为需宿主验收。
 
-临时 Generate：选中 Logo，从“其他脚本”运行 `dist/scripts/LogoGuides_Generate.jsx`，成功弹窗显示参考线/警告数量。它创建或更新顶层 Logo Guides、按需的 LG Baselines / LG Visual Lines、隐藏文档数据和 LG_SOURCE 来源标签，默认锁定辅助层，并恢复原活动图层与来源选区。默认 styled 输出是可编辑线条，不是 Illustrator 原生参考线；原生 guides/both 已有宿主支持和自动测试，待 M6 完整界面提供设置入口。
+脚本装入菜单后，在动作面板中新建动作，使用面板菜单“插入菜单项”选择脚本，再为动作设置功能键。实际快捷键、撤销和吸附行为由宿主验收记录确认。
 
-再次 Generate 会替换自动辅助子层，保留 LG Manual。M2 没有 Refresh/Clear；需要移除预览线时可手动解锁并删除 Logo Guides 图层。这样只删除图层，来源标签仍保留，下次 Generate 会重写；完整清理功能在 M6。当前建议在副本文档完成验收。
+| 脚本 | 操作 |
+| --- | --- |
+| LogoGuides_Generate.jsx | 选中完整Logo，打开设置窗口并生成辅助线 |
+| LogoGuides_Refresh.jsx | 微调后刷新全部带来源标签的对象，不弹设置窗口 |
+| LogoGuides_Clear.jsx | 选择清除范围；取消不改变文档 |
+| LogoGuides_SetBaseUnit.jsx | 用对象尺寸或两个选中锚点的距离设定并锁定a |
+| LogoGuides_CircleFromSelection.jsx | 用至少3个选中锚点拟合圆，结果进入LG Manual |
+| LogoGuides_DumpGeometry.jsx | 导出选区Geometry JSON用于复现和排错 |
 
-## 设置与日志
+P2可选的Measure脚本、比例关系报告尚未实现；不影响阶段1的P0/P1交付。
 
-DumpGeometry 将 geometry_dump.json 和 log.txt 放在 Illustrator 的 Folder.userData/LogoGuides/ 下；每次覆盖 dump，日志追加并在超过 1MB 时轮转。Generate 成功/失败也写入同一日志。导出弹窗显示实际路径。M2 入口使用默认设置，尚不读取用户 settings.json；全局设置文件与对话框在 M6 实现。完整字段和默认值见 DEV_PLAN.md 第 7 节。
+## 生成与微调
 
-文档数据保存在辅助层隐藏路径 `__LG_DATA__` 的 note。M2 尚无自动 a，相关值为 null 且不锁定；不显示模拟倍率。后续 M3 会补全自动 a 与标注。
+1. 选中Logo。支持路径、复合路径、编组和文字；文字只对临时副本转曲，原文字保留。剪切组的剪切路径不参与分析，其他不支持的对象会跳过并报告。
+2. 运行Generate，选择自动a、候选a、上次锁定值或自定义正数pt。没有文档数据时默认自动；有锁定值时默认使用上次的值。建议保持“锁定a”。
+3. 选择容差、显示精度、吸附步长、生成内容和输出样式。候选值在窗口打开时计算；修改容差不会刷新候选，选择自动时会按新容差重算。
+4. 确认生成。辅助线在顶层Logo Guides中，原图层恢复为活动图层；默认锁定辅助层。可选背景放在独立的底层Logo Guides BG。
+5. 调整原图形后运行Refresh。即使只选了一个锚点或部分路径，也会重新读取全部带当前runId来源标签的原始对象。锁定a保持数值和首次来源，倍率不会随微调漂移。
 
-## 推送到自己的仓库
+生成会重写LG_SOURCE标签并创建新runId；刷新沿用runId与来源标签，保留LG Manual。文档中的a未锁定时，刷新按照当前全局baseUnit重新计算并保持文档未锁定。来源标签丢失、辅助层改名或文档数据被删后，请重新运行Generate。
 
-本次只初始化本地 main 并提交，不设置远程。拿到自己的仓库地址后，可自行执行：
+当前已实现：水平/竖直参考线与视觉对齐线、笔画/间距/可选高度与字怀、倍率/特殊比例与吸附偏差、圆拟合/环厚度/圆偏差、轴角/夹角/构造线/目标线、实际类别图例，以及默认关闭的可选安全区/背景。
+
+吸附只计算目标与偏差并绘制目标线，不自动移动原图形。尺寸目标需打开尺寸吸附，角度目标需打开角度吸附；只有warn/bad的对应测量生成目标线，夹角和圆不画目标射线。
+
+| 输出模式 | 结果 |
+| --- | --- |
+| styled（样式化） | 可编辑的描边图形 |
+| guides（参考线） | 线、圆、圆弧设为Illustrator原生参考线；标签、方块与图例仍按样式绘制 |
+| both（两者） | 同时输出样式版和参考线版 |
+
+dark遵循原文深色底辅助线颜色，在白底上较浅。白色画板可选择light；背景板默认关闭，不会自动打开。
+
+## 手动工具
+
+CircleFromSelection：用直接选择工具选至少3个锚点，可跨路径。选中手柄不算选中锚点；相邻两端点都选中时才加入它们之间的曲线采样。输出圆、半径倍率（无文档a时显示pt）与“选中点最大偏差”，放在LG Manual。共线/重合点不足以拟合时会提示，原路径不会改动。刷新和“仅自动”清除保留手动结果；真实宿主行为待清单第7项确认。
+
+SetBaseUnit：选一个对象，可选宽度、高度、较小值；若恰好有两个真正选中的锚点，则可选欧氏距离、水平距离、垂直距离。确认后文档a写为manual且锁定；已有来源标签时自动刷新一次。零值不可设为a，取消不写数据。
+
+## 清除
+
+| 选项 | 删除 | 保留 |
+| --- | --- | --- |
+| 仅自动辅助线 | 自动子层、背景层 | LG Manual、隐藏文档数据、来源标签 |
+| 全部辅助线 | 自动子层、LG Manual、背景层 | 隐藏文档数据、来源标签 |
+| 全部 + 文档数据 | 整个Logo Guides、背景层、所有LG_SOURCE标签 | 原图形、其他标签、全局settings.json |
+| 取消 | 无 | 全部内容 |
+
+前两种清除后仍可Refresh重建；第三种清除后需要重新Generate。异常会报告简短错误和行号，恢复仍存在图层的锁定状态及活动图层；已经绘制的部分辅助结果可用Clear移除。
+
+## 全局设置与日志
+
+所有文件位于Illustrator的`Folder.userData/LogoGuides/`。Windows通常是`%APPDATA%/LogoGuides/`；DumpGeometry成功弹窗显示本机实际路径。
+
+| 文件 | 用途 |
+| --- | --- |
+| settings.json | UTF-8全局设置；每次生成窗口确认后保存，刷新读取当前值 |
+| log.txt / log.previous.txt | 追加日志，超过1MB轮转；含runId、生成/刷新耗时、图元和警告数量 |
+| geometry_dump.json | DumpGeometry或debug模式写出的原始Geometry JSON |
+| analysis.json | debug=true时的真实分析结果 |
+
+文档数据位于Logo Guides中隐藏路径__LG_DATA__的note，结构见主规范第6.4节。全局设置损坏时显示settings.json路径，修正JSON或移走该文件后重试；不会静默覆盖损坏文件。
+
+窗口未显示的参数可编辑settings.json。未知键忽略，缺失键按默认值合并；字段和默认值以[DEV_PLAN第7节](DEV_PLAN.md#7-参数表唯一事实来源)为准。常用参数如下：
+
+| 参数 | 默认 / 可选值 |
+| --- | --- |
+| mixedAsVisual | true；控制mixed水平线是否归为视觉线 |
+| circleDisplay / circleExtendDeg | full / 30；可选extended、arc |
+| circleLabels / maxCircles | false / 24 |
+| maxAngles / maxConstructionLines | 12 / 40 |
+| stemLabelStyle / labelDedup | lanes / false；可选squares |
+| marginFactor / fontSize | 0.2 / 0；fontSize=0为自动 |
+| angleLabelPrecision / signedAxisAngles | 1 / false；精度可选0.5、0.1 |
+| legendLanguage / uiLanguage | both / zh；均可选en，图例也可选zh |
+| features.background / clearSpaceFactor | false / 1；背景在窗口中不显示 |
+| fontNames / cjkFontNames | 按顺序尝试的PostScript字体名数组，见第7.1节 |
+| autoOutlineText / showSummary / debug | true / true / false |
+| advanced | 第7.2/7.3节已定义数值覆盖，如maxLanes；不接受新参数 |
+
+编辑设置后运行Refresh可应用。文档a已锁定时，全局baseUnit.value不会覆盖它；需SetBaseUnit更换锁定值，或重新Generate选择自动并取消锁定。刷新仅在有警告时弹摘要，生成摘要受showSummary控制。日志耗时包括读取、预分析、分析与绘制，排除用户停留在窗口中的时间。
+
+## 开发预览与验证
+
+```powershell
+npm run fixture -- F1
+npm run fixture -- tools/samples/illustrator-boatchin.geometry.json
+npm run preview -- dist/previews/F1.geometry.json
+npm run validate:geometry -- "导出的geometry_dump.json实际路径"
+node tools/validate_milestone.js M6
+```
+
+fixture接受F1–F10（含F9b）或实际JSON/SVG，输出geometry.json、analysis.json与SVG。预览直接运行同一份core，原图形在lg-geometry，辅助图元在lg-guides；导入跳过辅助组，不会重复读取。SVG视口包含全部图元外界，不改变核心guideArea和裁剪规则。
+
+SVG导入支持path、rect、circle、ellipse、polygon、polyline、line和transform；不展开文本、use、外部CSS、剪切或蒙版。无单位/px按1pt，显式物理单位换算；viewBox数值按pt使用，不按根width/height二次缩放，见D005。
+
+当前Codex机器无全局npm，可使用已有入口，不修改全局配置：
+
+```powershell
+$pnpmPath = 'C:\Users\disen\.cache\codex-runtimes\codex-primary-runtime\dependencies\bin\fallback\pnpm.cmd'
+& $pnpmPath dlx npm@10.9.4 test
+& $pnpmPath dlx npm@10.9.4 run build
+& $pnpmPath dlx npm@10.9.4 run check:es3
+```
+
+Chrome核对命令：
+
+```powershell
+$galleryUrl = ([Uri](Resolve-Path 'dist/validation/m6/gallery.html').Path).AbsoluteUri
+& 'C:\Program Files\Google\Chrome\Application\chrome.exe' --headless --disable-gpu --no-first-run --hide-scrollbars --force-device-scale-factor=1 --window-size=1800,2500 --user-data-dir="$PWD/dist/chrome-profile" --screenshot="$PWD/dist/validation/m6/gallery.png" $galleryUrl
+```
+
+确认PNG已写入后再查看。复杂真实样本可能超过默认四条车道，输出LABEL_LANES_FULL且末车道允许重叠；可手动调整标签或编辑advanced.maxLanes。算法不会宣称所有任意Logo均无重叠。
+
+## Git与后续阶段
+
+仓库是本地main，无远程、无推送，dist和node_modules不入Git。用户可在自己的空仓库地址确定后自行执行：
 
 ```powershell
 git remote add origin <你的仓库地址>
 git push -u origin main
 ```
 
-远程仓库若已包含提交，应先检查并整合历史，不强制推送。
+远程已有提交时先整合历史。M6完成第14.5节真实验收后才可标记已验收并准备v0.1；M7面板、M8 AI、M9签名安装继续遵循原顺序。

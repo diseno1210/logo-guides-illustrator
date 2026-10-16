@@ -5,7 +5,8 @@ const {loadCore}=require('./test/load_core');const {getFixture}=require('./test/
 function validateMilestone(stage='M3'){
  const {LG,plain}=loadCore();const directory=path.resolve(__dirname,'../dist/validation',stage.toLowerCase());fs.mkdirSync(directory,{recursive:true});
  const cases=[['F3',{}],['F3-snap',{snapMode:'step'}],['F4',{}],['F6',{}],['F8',{}],['BOATCHIN',{}]];
- if(stage==='M4'||stage==='M5')cases.push(['F1',{}],['F2',{}],['F5',{}],['F7-loose',{tolerancePreset:'loose'}],['F7-strict',{tolerancePreset:'strict'}],['F9',{}],['F9b',{}]);
+ if(['M4','M5','M6'].includes(stage))cases.push(['F1',{}],['F2',{}],['F5',{}],['F7-loose',{tolerancePreset:'loose'}],['F7-strict',{tolerancePreset:'strict'}],['F9',{}],['F9b',{}]);
+ if(stage==='M6')cases.push(['F4-angle-snap',{angleSnapStep:15}],['F3-clearspace',{features:{clearSpace:true,background:true},clearSpaceFactor:2}]);
  const reports=cases.map(([name,settings])=>{
   const g=name==='BOATCHIN'?loadGeometry(path.resolve(__dirname,'samples/illustrator-boatchin.geometry.json')):getFixture(name.split('-')[0]);
   const input={stylePreset:'light',...settings};const start=performance.now();const result=plain(LG.analyze(g,input));const ms=performance.now()-start;

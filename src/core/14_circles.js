@@ -23,10 +23,12 @@ LG.circles=(function(){
     }
     /** Signed tangent change, bounded to[-pi,pi]. */
     function turn(a,b){return Math.atan2(V.cross(a,b),V.dot(a,b));}
+    /** Forward tangent at a cubic endpoint, including coincident-handle limits. */
+    function endpointT(segment,end){var p=segment.p;var origin=end?p[3]:p[0];var order=end?[2,1,0]:[1,2,3];var tangent=[0,0];var i;for(i=0;i<order.length;i+=1){tangent=end?V.sub(origin,p[order[i]]):V.sub(p[order[i]],origin);if(V.length(tangent)>1e-9){return V.unit(tangent);}}return tangent;}
     /** Curve-only runs split by flat curvature, corners and curvature-sign changes. */
     function runs(model){var result=[];U.each(model.parts,function(part){U.each(part.contours,function(contour){var local=[];var current=[];var previous=null;var firstEligible=false;var lastEligible=false;function flush(){if(current.length){local.push(current);current=[];}previous=null;}
-        U.each(contour.segments,function(segment,index){if(segment.type!=="cubic"){flush();return;}U.each(segment.samples,function(sample,j){var eligible=Math.abs(sample.kappa)>=model.derived.kappaMin;if(index===0&&j===0){firstEligible=eligible;}if(index===contour.segments.length-1&&j===segment.samples.length-1){lastEligible=eligible;}if(!eligible){flush();return;}if(previous&&(sample.kappa*previous.kappa<0||(j===0&&Math.abs(turn(previous.T,sample.T))*180/Math.PI>model.config.cornerAngleDeg))){flush();}current.push(sample);previous=sample;});});flush();
-        if(contour.closed&&firstEligible&&lastEligible&&local.length>1){var first=local[0];var last=local[local.length-1];if(first[0].kappa*last[last.length-1].kappa>0&&Math.abs(turn(last[last.length-1].T,first[0].T))*180/Math.PI<=model.config.cornerAngleDeg){local[0]=last.concat(first);local.pop();}}
+        U.each(contour.segments,function(segment,index){if(segment.type!=="cubic"){flush();return;}U.each(segment.samples,function(sample,j){var eligible=Math.abs(sample.kappa)>=model.derived.kappaMin;if(index===0&&j===0){firstEligible=eligible;}if(index===contour.segments.length-1&&j===segment.samples.length-1){lastEligible=eligible;}if(!eligible){flush();return;}if(previous&&(sample.kappa*previous.kappa<0||(j===0&&index>0&&Math.abs(turn(endpointT(contour.segments[index-1],true),endpointT(segment,false)))*180/Math.PI>model.config.cornerAngleDeg))){flush();}current.push(sample);previous=sample;});});flush();
+        if(contour.closed&&firstEligible&&lastEligible&&local.length>1){var first=local[0];var last=local[local.length-1];if(first[0].kappa*last[last.length-1].kappa>0&&Math.abs(turn(endpointT(contour.segments[contour.segments.length-1],true),endpointT(contour.segments[0],false)))*180/Math.PI<=model.config.cornerAngleDeg){local[0]=last.concat(first);local.pop();}}
         U.each(local,function(run){result.push(run);});
     });});return result;}
     /** Accumulated tangent turning in degrees, after run segmentation. */

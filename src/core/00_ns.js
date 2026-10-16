@@ -1,4 +1,4 @@
-/* Shared ES3 namespace. M1 implements geometry foundations, not feature analysis. */
+/* Shared ES3 namespace for the complete stage1 analysis and host scripts. */
 var LG = LG || {};
 LG.version = "0.0.0-dev";
-LG.milestone = "M5";
+LG.milestone = "M6";

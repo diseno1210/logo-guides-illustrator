@@ -1,6 +1,6 @@
 # Logo 辅助线生成器
 
-面向 Adobe Illustrator 的 Logo / 字标辅助线工具。**M0–M5 已按各阶段门槛验收，M6 开发中**。已包含参考线、测量/倍率、圆/环、角度、构造线、吸附目标线和实际类别图例；完整脚本交互正在整合。
+面向 Adobe Illustrator 的 Logo / 字标辅助线工具。**M0–M5已验收，M6自动验证通过、待Illustrator实测**。六份脚本已构建，包含设置窗口、刷新、清除、基准单位和手动圆工具。当前尚未发布v0.1；M7–M9未开始。
 
 ## 开发入口
 
@@ -8,6 +8,7 @@
 - [开发流程](docs/DEVELOPMENT_WORKFLOW.md)：严格按 M0–M9 顺序开发和验收。
 - [当前状态](docs/STATUS.md)、[决策记录](docs/DECISIONS.md)、[变更记录](docs/CHANGELOG.md)。
 - [使用说明](docs/USER_GUIDE.md)：仅描述实际可用能力。
+- [M6用户验收清单](docs/acceptance/M6.md)：按原文第14.5节完成12项宿主验证。
 
 ## 环境与命令
 
@@ -22,6 +23,7 @@ npm run fixture -- F1
 npm run preview -- dist/previews/F1.geometry.json
 npm run validate:geometry -- <导出的geometry_dump.json路径>
 node tools/validate_references.js
+node tools/validate_milestone.js M6
 npm run fixture -- tools/samples/illustrator-boatchin.geometry.json
 ```
 
@@ -29,6 +31,8 @@ npm run fixture -- tools/samples/illustrator-boatchin.geometry.json
 
 ## 仓库与交付
 
-本地 `main` 分支，尚未连接远程仓库。源码、文档、测试和 `package-lock.json` 入库；`node_modules/`、`dist/`、日志和密钥不入库。DumpGeometry 可读取选区并导出 JSON；临时 Generate 绘制参考线、写入文档数据与来源标签，并恢复活动图层。
+本地`main`，无远程、无推送、无发布tag。源码、文档、测试和锁文件入库；`node_modules/`、`dist/`、日志和密钥不入库。三项开发依赖固定版本，core/host保持ES3、无运行时依赖。
 
-真实导出与绘制证据见 [当前状态](docs/STATUS.md)。M3–M5 按原文自动验收依次推进；M6 必须完成第14.5节用户 Illustrator 实测。尚未发布 v0.1。
+构建后从Illustrator“文件 › 脚本 › 其他脚本”运行`dist/scripts/LogoGuides_Generate.jsx`。配套有Refresh、Clear、SetBaseUnit、CircleFromSelection和DumpGeometry。详细步骤见使用说明；自动验证与真实宿主证据分别记录在STATUS。
+
+自动测试153项通过，F10预建2000锚点Geometry的完整analyze约227ms；Node/Chrome/DOM替身结果不能代替真实Illustrator验收。预览在`dist/validation/m6/gallery.html`及`gallery.png`。

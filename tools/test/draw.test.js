@@ -10,47 +10,7 @@ const {sourceFiles,bundleFiles,build}=require('../build');
 const {F3,F1,rectangle}=require('./fixtures');
 const ROOT=path.resolve(__dirname,'../..');
 
-/** Small Illustrator DOM double. This checks our calls, never Illustrator's actual behavior. */
-function harness(){
-  const {LG,context,plain}=loadCore();const alerts=[];const fontLookups=[];const files=new Map();
-  const doc={typename:'Document',layers:[],pageItems:[],selection:[],documentColorSpace:0};
-  const state={failDrawing:false};
-  function tags(item){const list=[];list.add=()=>{const tag={name:'',value:'',remove(){list.splice(list.indexOf(tag),1);}};list.push(tag);return tag;};return list;}
-  function pathItems(parent){const list=[];list.add=()=>{
-    if(state.failDrawing&&parent.name==='LG Baselines')throw new Error('mock drawing failure');
-    const item={typename:'PathItem',parent,name:'',hidden:false,tags:tags(),setEntirePath(points){this.points=plain(points);this.pathPoints=this.points.map(p=>({anchor:p,leftDirection:p,rightDirection:p}));},remove(){list.splice(list.indexOf(item),1);doc.pageItems.splice(doc.pageItems.indexOf(item),1);}};
-    list.push(item);doc.pageItems.push(item);return item;
-  };list.ellipse=(top,left,width,height)=>{const p=list.add();p.ellipse=[top,left,width,height];return p;};return list;}
-  function textFrames(group){const frames=[];frames.add=()=>{
-    const text={contents:'',position:[0,0],textRange:{characterAttributes:{}},translate(x,y){this.position=[this.position[0]+x,this.position[1]+y];}};
-    Object.defineProperty(text,'geometricBounds',{get(){const size=text.textRange.characterAttributes.size;const [x,y]=text.position;return [x,y+size*0.8,x+text.contents.length*size*0.63,y-size*0.2];}});
-    frames.push(text);return text;
-  };return frames;}
-  function groups(){const list=[];list.add=()=>{
-    const group={name:'',dx:0,dy:0,translate(x,y){this.dx+=x;this.dy+=y;},rotate(...args){this.rotation=args;}};
-    group.textFrames=textFrames(group);
-    Object.defineProperty(group,'geometricBounds',{get(){const boxes=group.textFrames.map(t=>t.geometricBounds);return [Math.min(...boxes.map(b=>b[0]))+group.dx,Math.max(...boxes.map(b=>b[1]))+group.dy,Math.max(...boxes.map(b=>b[2]))+group.dx,Math.min(...boxes.map(b=>b[3]))+group.dy];}});
-    list.push(group);return group;
-  };return list;}
-  function layers(parent){const list=[];list.add=()=>{
-    const layer={typename:'Layer',name:'',parent,locked:false,visible:true,zOrder(method){const index=list.indexOf(layer);list.splice(index,1);if(method===1)list.push(layer);else list.unshift(layer);},remove(){assert.equal(this.locked,false);list.splice(list.indexOf(layer),1);}};
-    layer.layers=layers(layer);layer.pathItems=pathItems(layer);layer.groupItems=groups();
-    list.unshift(layer);doc.activeLayer=layer;return layer;
-  };return list;}
-  doc.layers=layers(doc);const artwork=doc.layers.add();artwork.name='Artwork';
-  for(let i=0;i<3;i++){
-    const item=artwork.pathItems.add();Object.assign(item,{filled:true,stroked:false,strokeWidth:0,closed:true,clipping:false,pathPoints:rectangle(i*40,0,20,100).contours[0].points.map(p=>({anchor:p.a,leftDirection:p.l,rightDirection:p.r}))});
-    item.tags.add().name='OTHER_TAG';
-  }
-  doc.selection=Array.from(artwork.pathItems);doc.activeLayer=artwork;
-  doc.artboards=[{artboardRect:[-50,150,200,-50]}];doc.artboards.getActiveArtboardIndex=()=>0;
-  function File(name){this.fsName=name;this.exists=files.has(name);this.length=0;this.open=()=>true;this.write=contents=>{files.set(name,(files.get(name)||'')+contents);return true;};this.close=()=>true;}
-  function Folder(name){this.fsName=name;this.exists=true;}Folder.userData={fsName:'/mock'};
-  Object.assign(context,{File,Folder,app:{documents:[doc],activeDocument:doc,textFonts:{getByName(name){fontLookups.push(name);if(name==='ArialMT'||name==='MicrosoftYaHei')return {name};throw new Error('missing font');}}},alert:m=>alerts.push(m),confirm:()=>true,RGBColor:function(){},CMYKColor:function(){},DocumentColorSpace:{CMYK:1},StrokeCap:{BUTTENDCAP:0},ZOrderMethod:{BRINGTOFRONT:0},Transformation:{CENTER:0}});
-  vm.runInContext(bundleFiles(sourceFiles(path.join(ROOT,'src/host'))),context);
-  context.PathPointSelection={ANCHORPOINT:1,LEFTDIRECTION:2,RIGHTDIRECTION:3,NOSELECTION:0};context.ZOrderMethod.SENDTOBACK=1;
-  return {LG,context,plain,doc,artwork,alerts,fontLookups,state,files};
-}
+const {harness}=require('./host_harness');
 
 test('Generate draws references, stores hidden Doc Data, tags sources, locks layer and restores activeLayer/selection',()=>{
   const {LG,plain,doc,artwork}=harness();const sources=doc.selection;const settings=LG.config.defaults();const result=LG.analyze(F3(),{features:{stemWidths:false,gaps:false}});
@@ -118,7 +78,7 @@ test('built Generate executes the actual read/analyze/draw/store flow in the ES3
   const {context,doc,artwork,alerts,files}=harness();const target=build().find(file=>file.endsWith('LogoGuides_Generate.jsx'));
   vm.runInContext(fs.readFileSync(target,'utf8').replace(/^#target illustrator\n/,''),context,{timeout:5000});
   assert.equal(doc.activeLayer,artwork);assert.equal(doc.layers[0].name,'Logo Guides');assert.equal(doc.layers[0].layers.find(l=>l.name==='LG Baselines').pathItems.length,8);
-  assert.ok(alerts.some(m=>/Reference lines generated: 8/.test(m)));assert.ok(files.get('/mock/LogoGuides/log.txt').includes('M5 Generate OK'));
+  assert.ok(alerts.some(m=>/参考线: 8/.test(m)));assert.ok(files.get('/mock/LogoGuides/log.txt').includes('M6 Generate OK'));assert.ok(files.has('/mock/LogoGuides/settings.json'));
 });
 
 test('arc uses <=90degree cubics with outgoing right and incoming left handles; ellipse uses y-up bounds',()=>{
@@ -137,4 +97,8 @@ test('manual circle uses actual anchor selection enums, shared cubic samples, pt
 
 test('guides output keeps styled legend samples and background is a locked bottom top-level layer',()=>{
  const {LG,doc,artwork}=harness();const settings=LG.config.resolve({output:'guides',features:{background:true}}).settings;LG.hostDraw.generate(doc,LG.analyze(F3(),settings),settings,doc.selection);const bg=doc.layers.at(-1);assert.equal(bg.name,'Logo Guides BG');assert.equal(bg.locked,true);assert.equal(bg.pathItems.length,1);assert.equal(doc.layers[0].name,'Logo Guides');const legend=doc.layers[0].layers.find(l=>l.name==='LG Legend');assert.ok(legend.pathItems.length>0);assert.ok(legend.pathItems.every(p=>p.guides!==true&&p.stroked));assert.equal(doc.activeLayer,artwork);
+});
+
+test('manual fit works across three isolated anchor paths and rejects collinear anchors without creating output',()=>{
+ const {LG,doc,artwork}=harness();const points=[[0,0],[100,0],[0,100]];const selected=points.map(a=>{const p=artwork.pathItems.add();Object.assign(p,{filled:false,stroked:false,closed:false,pathPoints:[{anchor:a,leftDirection:a,rightDirection:a,selected:1}]});return p;});doc.selection=selected;const result=LG.hostManual.circle(doc,LG.config.defaults());assert.equal(result.sampleCount,3);assert.ok(Math.abs(result.circle.cx-50)<1e-8);assert.ok(Math.abs(result.circle.cy-50)<1e-8);assert.equal(doc.layers[0].locked,true);const manual=doc.layers[0].layers.find(l=>l.name==='LG Manual');assert.equal(manual.pathItems.length,1);selected[2].pathPoints[0].anchor=[200,0];assert.throws(()=>LG.hostManual.circle(doc,LG.config.defaults()),/共线/);assert.equal(manual.pathItems.length,1);
 });

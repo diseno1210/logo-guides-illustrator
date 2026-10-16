@@ -1,4 +1,4 @@
-/** M3 pipeline: measurements are computed even when their display switches are off. */
+/** Shared analysis pipeline; measurements for a remain available when their display is off. */
 LG.analyze = function (geometry, settings, context) {
     var cfg=LG.config.resolve(settings);var reusable=!!context&&!!context.model&&LG.json.stringify(context.geometry)===LG.json.stringify(geometry);var key;var model;var analysis;var render;var unit;
     if(reusable){for(key in cfg){if(LG.util.has(cfg,key)&&key!=="settings"&&cfg[key]!==context.parameters[key]){reusable=false;break;}}}

@@ -50,7 +50,18 @@ function renderAnalysis(geometry, settings = {}, suppliedResult) {
   const resolved = plain(LG.config.resolve(settings).settings);
   const styles = plain(LG.styles.preset(resolved.stylePreset));
   const render = result.render;
-  const [left, top, right, bottom] = render.guideArea;
+  let viewport=render.guideArea.slice();
+  const include=p=>{viewport=[Math.min(viewport[0],p[0]),Math.max(viewport[1],p[1]),Math.max(viewport[2],p[0]),Math.min(viewport[3],p[1])];};
+  include([result.analysis.bbox[0],result.analysis.bbox[1]]);include([result.analysis.bbox[2],result.analysis.bbox[3]]);
+  // The preview viewport includes real primitives outside the guide-area clipping rectangle.
+  for(const p of render.primitives){
+    if(p.type==='line'){include(p.p0);include(p.p1);}
+    if(p.type==='polygon')p.points.forEach(include);
+    if(p.type==='label'){const b=plain(LG.layout.labelBounds(p,render.fontSize));include([b[0],b[1]]);include([b[2],b[3]]);}
+    if(p.type==='circle'){include([p.c[0]-p.r,p.c[1]+p.r]);include([p.c[0]+p.r,p.c[1]-p.r]);}
+    if(p.type==='arc'){const angles=[p.startDeg,p.endDeg];for(let a=Math.ceil(p.startDeg/90)*90;a<p.endDeg;a+=90)angles.push(a);angles.forEach(a=>include([p.c[0]+p.r*Math.cos(a*Math.PI/180),p.c[1]+p.r*Math.sin(a*Math.PI/180)]));}
+  }
+  const padding=2*render.strokeUnit;const [left,top,right,bottom]=[viewport[0]-padding,viewport[1]+padding,viewport[2]+padding,viewport[3]-padding];
   const styleAttributes = key => {
     const s = styles[key];
     return `fill="${s.fillHex || 'none'}" stroke="${s.stroke || 'none'}" opacity="${s.opacity / 100}"` + (s.stroke ? ` stroke-width="${s.width * render.strokeUnit}" stroke-dasharray="${s.dashes.length ? s.dashes.map(v => v * render.strokeUnit).join(' ') : 'none'}" stroke-linecap="butt"` : '');

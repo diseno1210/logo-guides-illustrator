@@ -16,8 +16,8 @@ LG.hostRead = (function () {
         return roots;
     }
     /** Read selected top-level sources into Geometry JSON v1; do not mutate originals. */
-    function selection(doc, settings) {
-        var U = LG.util; var cfg = LG.config.resolve(settings); var selected = doc.selection; var roots = sourceObjects(doc); var parts = []; var warnings = []; var skipped = {}; var anchorCount = 0; var approvedLarge = false; var savedLayer = doc.activeLayer; var geometryBox = null; var i; var j; var board; var boards; var center; var color;
+    function selection(doc, settings, sources) {
+        var U = LG.util; var cfg = LG.config.resolve(settings); var selected = doc.selection; var roots = sources || sourceObjects(doc); var parts = []; var warnings = []; var skipped = {}; var anchorCount = 0; var approvedLarge = false; var savedLayer = doc.activeLayer; var geometryBox = null; var i; var j; var board; var boards; var center; var color;
         /** Count unsupported objects by type. */
         function skip(type) { skipped[type] = (U.has(skipped, type) ? skipped[type] : 0) + 1; }
         /** Snapshot pathPoints once; empty and zero-length paths are omitted. */

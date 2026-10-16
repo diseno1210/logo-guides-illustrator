@@ -1,5 +1,5 @@
 LG.layout = (function () {
-    /** Guide area and reference spans; dimension lanes arrive in M3. */
+    /** Guide area and reference spans, including measured lane extents. */
     function references(model, areaOverride, rowExtents) {
         var U = LG.util; var settings = model.config.settings; var fs = model.derived.fs; var m = settings.marginFactor * model.D;
         var b = model.bbox; var area = settings.extendTo === "artboard" ? model.artboard.slice(0) : [b[0] - m, b[1] + m, b[2] + m, b[3] - m];

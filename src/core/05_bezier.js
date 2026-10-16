@@ -1,6 +1,6 @@
 LG.bezier = (function () {
     var V = LG.vec;
-    /** Evaluate cubic [P0,P1,P2,P3] at t via de Casteljau. */
+    /** Evaluate cubic [P0,P1,P2,P3] at t using the Bernstein basis. */
     function at(p, t) { var u=1-t;var a=u*u*u;var b=3*u*u*t;var c=3*u*t*t;var d=t*t*t;return [a*p[0][0]+b*p[1][0]+c*p[2][0]+d*p[3][0],a*p[0][1]+b*p[1][1]+c*p[2][1]+d*p[3][1]]; }
     /** First derivative. */
     function derivative(p, t) {var u=1-t;return [3*(u*u*(p[1][0]-p[0][0])+2*u*t*(p[2][0]-p[1][0])+t*t*(p[3][0]-p[2][0])),3*(u*u*(p[1][1]-p[0][1])+2*u*t*(p[2][1]-p[1][1])+t*t*(p[3][1]-p[2][1]))];}

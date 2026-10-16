@@ -13,7 +13,7 @@ const { checkSource } = require('../check_es3');
 test('shared core loads with every contract-banned API removed and no host objects', () => {
   const { context, LG, plain } = loadCore();
   assert.equal(LG.version, '0.0.0-dev');
-  assert.equal(LG.milestone, 'M5');
+  assert.equal(LG.milestone, 'M6');
   assert.equal(typeof LG.geometry.normalize, 'function');
   assert.equal(typeof LG.json.stringify, 'function');
   const values = vm.runInContext(`
@@ -40,7 +40,7 @@ test('build is deterministic, ES3/ASCII, and Generate guards missing documents',
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'logo-guides-build-'));
   t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
   const products = build(directory);
-  assert.equal(products.length, 3);
+  assert.equal(products.length, 6);
   for(const product of products)assert.deepEqual(checkSource(fs.readFileSync(product,'utf8')),[]);
   const generated = products.find(file=>file.endsWith('LogoGuides_Generate.jsx'));
   const source = fs.readFileSync(generated, 'utf8');

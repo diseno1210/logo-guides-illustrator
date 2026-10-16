@@ -34,11 +34,12 @@ test('circle count cap keeps ring and visual fits by score, including zero limit
 
 test('curve runs split at line/flat/sign/corner boundaries and join a continuous closed seam',()=>{
  const sample=(angle,k=1)=>({p:[Math.cos(angle),Math.sin(angle)],T:[-Math.sin(angle),Math.cos(angle)],kappa:k});
- const seg=(samples,type='cubic')=>({type,samples});
+ const seg=(samples,type='cubic')=>{const a=samples[0]||{p:[0,0],T:[1,0]};const b=samples.at(-1)||a;return {type,samples,p:[a.p,[a.p[0]+a.T[0],a.p[1]+a.T[1]],[b.p[0]-b.T[0],b.p[1]-b.T[1]],b.p]};};
  const model=segments=>({parts:[{contours:[{closed:true,segments}]}],derived:{kappaMin:.01},config:{cornerAngleDeg:15}});
  let runs=LG.circles.runs(model([seg([sample(0),sample(.1)]),seg([],'line'),seg([sample(-.2),sample(-.1)])]));assert.equal(runs.length,1);assert.equal(runs[0].length,4);
  runs=LG.circles.runs(model([seg([sample(0),sample(.1),sample(.2,0),sample(.3),sample(.4,-1)])]));assert.equal(runs.length,3);
  runs=LG.circles.runs(model([seg([sample(0),sample(.1)]),seg([sample(1),sample(1.1)])]));assert.equal(runs.length,2);
+ const sparse=LG.sample.run(LG.geometry.normalize(getFixture('F1'),{advanced:{sampleSpacingRel:1}}));assert.equal(LG.circles.runs(sparse).length,1);
 });
 
 test('F10 full analyze of prebuilt2000-anchor geometry stays below300ms',()=>{
