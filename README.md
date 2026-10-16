@@ -1,6 +1,6 @@
 # Logo 辅助线生成器
 
-面向 Adobe Illustrator 的 Logo / 字标辅助线工具。**M0–M2 已验收，M3 自动验收通过，M4 开发中**。临时 Generate 已包含参考线、笔画/间距与倍率标注；圆、角度及完整交互继续按里程碑实现。
+面向 Adobe Illustrator 的 Logo / 字标辅助线工具。**M0–M4 已按各阶段门槛验收，M5 开发中**。临时 Generate 包含参考线、笔画/间距、倍率和辅助圆；手动拟合圆脚本已构建。角度与完整交互继续按里程碑实现。
 
 ## 开发入口
 
@@ -31,4 +31,4 @@ npm run fixture -- tools/samples/illustrator-boatchin.geometry.json
 
 本地 `main` 分支，尚未连接远程仓库。源码、文档、测试和 `package-lock.json` 入库；`node_modules/`、`dist/`、日志和密钥不入库。DumpGeometry 可读取选区并导出 JSON；临时 Generate 绘制参考线、写入文档数据与来源标签，并恢复活动图层。
 
-真实导出证据见 [M1 验收记录](docs/acceptance/M1.md)。当前请按 [M2 验收步骤](docs/acceptance/M2.md) 测试 `dist/scripts/LogoGuides_Generate.jsx`；通过前不进入 M3。
+真实导出与绘制证据见 [当前状态](docs/STATUS.md)。M3–M5 按原文自动验收依次推进；M6 必须完成第14.5节用户 Illustrator 实测。尚未发布 v0.1。

@@ -41,13 +41,26 @@ LG.hostDraw = (function () {
         if (primitive.rotation) { group.rotate(primitive.rotation, true, true, true, true, Transformation.CENTER); }
         return group;
     }
+    /** Create a line/circle/arc/polygon with exact y-up Illustrator coordinates. */
+    function shape(layer,p){
+        var item;var i;var count;var step;var angle;var next;var handle;var points=[];
+        if(p.type==="circle"){return layer.pathItems.ellipse(p.c[1]+p.r,p.c[0]-p.r,2*p.r,2*p.r);}
+        item=layer.pathItems.add();
+        if(p.type==="line"){item.setEntirePath([p.p0,p.p1]);}
+        else if(p.type==="polygon"){item.setEntirePath(p.points);item.closed=p.closed;}
+        else if(p.type==="arc"){
+            count=Math.max(1,Math.ceil((p.endDeg-p.startDeg)/90));step=(p.endDeg-p.startDeg)/count*Math.PI/180;
+            for(i=0;i<=count;i+=1){angle=p.startDeg*Math.PI/180+i*step;points.push([p.c[0]+p.r*Math.cos(angle),p.c[1]+p.r*Math.sin(angle)]);}item.setEntirePath(points);item.closed=false;handle=4/3*Math.tan(step/4)*p.r;
+            for(i=0;i<=count;i+=1){angle=p.startDeg*Math.PI/180+i*step;next=item.pathPoints[i];next.anchor=points[i];next.leftDirection=i===0?points[i]:[points[i][0]+handle*Math.sin(angle),points[i][1]-handle*Math.cos(angle)];next.rightDirection=i===count?points[i]:[points[i][0]-handle*Math.sin(angle),points[i][1]+handle*Math.cos(angle)];}
+        }else{throw new Error("Unsupported shape");}return item;
+    }
     /** Render M2 line/label primitives and metadata; restore source selection/layer even on error. */
     function generate(doc, result, settings, sources) {
         var U = LG.util; var savedLayer = doc.activeLayer; var savedSelection = doc.selection; var root = LG.hostStore.layer(doc); var wasLocked = root ? root.locked : false;
         var completed = false; var layers = {}; var used = {}; var styles = LG.styles.preset(settings.stylePreset); var i; var key; var primitive; var item; var data;
         // Validate supported primitives and existing metadata before deleting old automatic output.
         LG.hostStore.read(doc);
-        U.each(result.render.primitives, function (p) { if ((p.type !== "line" && p.type !== "label" && p.type!=="polygon") || !U.has(names, p.layer)) { throw new Error("Unsupported primitive"); } if(p.type!=="line"||settings.output!=="guides"){used[p.layer] = true;} if (p.type === "line" && settings.output !== "styled") { used.snapGuides = true; } });
+        U.each(result.render.primitives, function (p) { if (U.indexOf(["line","label","polygon","circle","arc"],p.type)<0 || !U.has(names, p.layer)) { throw new Error("Unsupported primitive"); } var guide=p.type==="line"||p.type==="circle"||p.type==="arc";if(!guide||settings.output!=="guides"){used[p.layer] = true;} if (guide && settings.output !== "styled") { used.snapGuides = true; } });
         if (!root) { root = doc.layers.add(); root.name = "Logo Guides"; }
         try {
             root.locked = false; root.visible = true; root.zOrder(ZOrderMethod.BRINGTOFRONT);
@@ -57,10 +70,10 @@ LG.hostDraw = (function () {
             for (i = 0; i < result.render.primitives.length; i += 1) {
                 primitive = result.render.primitives[i];
                 if (primitive.type === "label") { label(layers[primitive.layer], primitive, result.render, styles, settings, doc); }
-                else if(primitive.type==="polygon"){item=layers[primitive.layer].pathItems.add();item.setEntirePath(primitive.points);item.closed=primitive.closed;item.name=primitive.featureId;style(item,styles[primitive.style],result.render.strokeUnit,doc);}
+                else if(primitive.type==="polygon"){item=shape(layers[primitive.layer],primitive);item.name=primitive.featureId;style(item,styles[primitive.style],result.render.strokeUnit,doc);}
                 else {
-                    if (settings.output !== "guides") { item = layers[primitive.layer].pathItems.add(); item.setEntirePath([primitive.p0, primitive.p1]); item.name = primitive.featureId; style(item, styles[primitive.style], result.render.strokeUnit, doc); }
-                    if (settings.output !== "styled") { item = layers.snapGuides.pathItems.add(); item.setEntirePath([primitive.p0, primitive.p1]); item.name = primitive.featureId; item.filled = false; item.stroked = false; item.guides = true; }
+                    if (settings.output !== "guides") { item = shape(layers[primitive.layer],primitive); item.name = primitive.featureId; style(item, styles[primitive.style], result.render.strokeUnit, doc); }
+                    if (settings.output !== "styled") { item = shape(layers.snapGuides,primitive); item.name = primitive.featureId; item.filled = false; item.stroked = false; item.guides = true; }
                 }
             }
             data = LG.hostStore.createData(result.analysis, settings); LG.hostStore.write(root, data); LG.hostStore.tagSources(doc, sources, data.runId); completed = true;
@@ -70,5 +83,5 @@ LG.hostDraw = (function () {
             finally { try { doc.activeLayer = savedLayer; } finally { doc.selection = completed ? sources : savedSelection; } }
         }
     }
-    return { generate: generate, color: color, label: label, style: style };
+    return { generate: generate, color: color, label: label, style: style, shape:shape };
 }());

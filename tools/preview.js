@@ -58,6 +58,13 @@ function renderAnalysis(geometry, settings = {}, suppliedResult) {
   const guides = render.primitives.map(p => {
     if (p.type === 'line') return `    <path data-feature="${escapeXml(p.featureId)}" d="M ${pointText(p.p0)} L ${pointText(p.p1)}" ${styleAttributes(p.style)}/>`;
     if(p.type==='polygon')return `    <path data-feature="${escapeXml(p.featureId)}" d="M ${p.points.map(pointText).join(' L ')}${p.closed?' Z':''}" ${styleAttributes(p.style)}/>`;
+    if(p.type==='circle')return `    <circle data-feature="${escapeXml(p.featureId)}" cx="${p.c[0]}" cy="${-p.c[1]}" r="${p.r}" ${styleAttributes(p.style)}/>`;
+    if(p.type==='arc'){
+      const at=degrees=>[p.c[0]+p.r*Math.cos(degrees*Math.PI/180),p.c[1]+p.r*Math.sin(degrees*Math.PI/180)];
+      const parts=Math.max(1,Math.ceil((p.endDeg-p.startDeg)/90));let d='M '+pointText(at(p.startDeg));
+      for(let i=1;i<=parts;i++)d+=` A ${p.r} ${p.r} 0 0 0 ${pointText(at(p.startDeg+(p.endDeg-p.startDeg)*i/parts))}`;
+      return `    <path data-feature="${escapeXml(p.featureId)}" d="${d}" ${styleAttributes(p.style)}/>`;
+    }
     if (p.type === 'label') {
       const total = p.lines.reduce((sum, line) => sum + 1.2 * render.fontSize * line.sizeFactor, 0);
       let cursor = -total / 2;

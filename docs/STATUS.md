@@ -8,8 +8,8 @@
 | M1 | 已验收 | BOATCHIN 真实 Illustrator 导出经 Node 读取和 Chrome 预览核对通过 |
 | M2 | 已验收 | 用户截图确认实际生成 12 条参考线、0 警告，辅助层锁定，原图层活动 |
 | M3 | 已验收 | 115 项测试、构建/ES3、F3/F4/F6/F8 数值与 Chrome 布局通过；无额外宿主门槛 |
-| M4 | 进行中 | M3 通过；实施辅助圆、环与手动拟合，F10 性能验收 |
-| M5 | 未开始 | 依赖 M4 |
+| M4 | 已验收 | 圆/环/分类/偏差/手动拟合自动验证与 Chrome 通过，F10 <300ms |
+| M5 | 进行中 | M4 通过；角度、构造线、目标线及图例 |
 | M6 | 未开始 | 依赖 M5；要求原文 14.5 完整手动验收 |
 | M7 | 未开始 | 依赖 M6 |
 | M8 | 未开始 | 依赖 M7 与真实 AI 调用 |
@@ -52,7 +52,7 @@
 
 ## 当前限制与下一步
 
-M1 几何基础与实际选区导出已验收。M2 参考线分析、基础绘制和存储自动验证通过，等待真实 Generate 绘制；尺寸、圆、角度、完整交互、CEP 和 AI 未实现。host 自动测试使用 DOM mock，不能替代真实 Illustrator 实测。
+M0–M4 已满足各自门槛；M1/M2 含用户真实导出和绘制证据。M5 开发中，M6 完整脚本交互尚未实现。host 自动测试使用 DOM mock；手动拟合、CMYK、撤销等宿主行为仍需 M6 第14.5节真实验收。CEP 和 AI 尚未实现。
 
 ## M1 真实 Illustrator 验证（2026-10-16）
 
@@ -92,3 +92,12 @@ M1 几何基础与实际选区导出已验收。M2 参考线分析、基础绘�
 - `node tools/run_tests.js`：115/115；`node tools/build.js`、`node tools/check_es3.js` 通过。F3 宽20/20/19.2、间距20/20.8、a20；F4 两条20pt斜笔画；F6 竖笔画20；F8 两行标注正确。F2 环兜底留到 M4。
 - `node tools/validate_milestone.js M3` 输出 `dist/validation/m3/`；Chrome 无头截图 gallery.png 已实际查看。F3/吸附/F4/F6/F8 标签无重叠；BOATCHIN 默认四车道溢出并输出 LABEL_LANES_FULL，允许末车道重叠，不隐瞒且不自行提高默认车道数。
 - 当前无圆/角度/完整交互；M3 无单独强制 Illustrator 实测节点，依第15节自动验收后进入 M4。
+
+## M4 验收记录（2026-10-16）
+
+- 实现曲率分段、Kåsa/LM、递归弧长拆分、相邻/跨区域合并、最大角隙覆盖、墨迹环验证、视觉分类/优先评分与数量限制。拟合中的采样不泄露到公开输出。
+- F1 r=100.014、覆盖359.43°；F2 两圆、环40.006、a来源fallback-ring且标签a；F5均≤180°；F6环20.003及竖笔画20；F7宽松1圆、严格无异常；F9/F9b分类通过。
+- 新增 CircleFromSelection：读取真正选中锚点，只有相邻端点均选中才加入曲线采样，输出 LG Manual，显示文档a倍率或pt及锚点最大偏差；不改来源数据，自动生成保留手动层。
+- `node tools/run_tests.js`：129/129通过，包括拟合、开关、容差、环、圆弧手柄和手动选点。F10 预建输入完整 analyze=219.43ms（另一次216.92ms），低于300ms。测试文件串行避免其他工作进程争用CPU；未降低采样数或容差。
+- `node tools/build.js`、`node tools/check_es3.js` 通过，三份ASCII ES3脚本。`node tools/validate_milestone.js M4` 和 Chrome 无头截图 `dist/validation/m4/gallery.png` 已实际查看；环与偏差符合预期，复杂真实样本车道重叠继续警告。
+- 手动工具真实 Illustrator 行为留待第14.5节；原文M4无额外用户门槛，继续M5。

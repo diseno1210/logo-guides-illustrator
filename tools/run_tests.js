@@ -9,6 +9,7 @@ const directory = path.join(__dirname, 'test');
 const files = fs.readdirSync(directory).filter(name => name.endsWith('.test.js')).sort()
   .map(name => path.join(directory, name));
 if (!files.length) throw new Error('No test files found');
-const result = spawnSync(process.execPath, ['--test', ...files], { stdio: 'inherit' });
+// Serial files keep the specified300ms F10 CPU measurement free of other test workers.
+const result = spawnSync(process.execPath, ['--test', '--test-concurrency=1', ...files], { stdio: 'inherit' });
 if (result.error) throw result.error;
 process.exitCode = result.status === null ? 1 : result.status;

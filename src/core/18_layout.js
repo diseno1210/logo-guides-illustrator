@@ -81,7 +81,19 @@ LG.layout = (function () {
             });
         }}
         U.each(extras,function(p){if(p.type==="label"){var b=labelBounds(p,fs);area=U.union(area,[b[0]-fs,b[1]+fs,b[2]+fs,b[3]-fs]);}});
+        if(s.features.ringThickness){U.each(model.rings||[],function(ring){var outer=null;var inner=null;U.each(model.circles,function(c){if(c.id===ring.outerId){outer=c;}if(c.id===ring.innerId){inner=c;}});if(!outer||!inner){return;}var angle=ring.angleDeg*Math.PI/180;var T=[Math.cos(angle),Math.sin(angle)];extras.push({type:"line",p0:V.add([inner.cx,inner.cy],V.scale(T,inner.r)),p1:V.add([outer.cx,outer.cy],V.scale(T,outer.r)),style:"measureBar",layer:"dimensions",featureId:ring.id});extras.push(LG.primitives.label(V.add([outer.cx,outer.cy],V.scale(T,outer.r+0.8*fs)),0,LG.ratios.labelLines(ring.measure,cfg),ring.id));});}
+        if(s.features.circles){U.each(model.circles||[],function(c){
+            extras.push({type:"circle",c:[c.cx,c.cy],r:c.r,style:c.category==="visual"?"circleVisual":"circleFitted",layer:"circles",featureId:c.id});
+            if(s.circleLabels){extras.push(LG.primitives.label([c.cx+(c.r+0.8*fs)/Math.sqrt(2),c.cy+(c.r+0.8*fs)/Math.sqrt(2)],0,[{text:"R "+c.measureR.display,sizeFactor:1,style:"text"}],c.id));}
+            if(s.features.deviationMarkers&&Math.abs(c.maxErrSigned)>Math.max(cfg.devOk*c.r,0.1)){
+                var radial=V.unit(V.sub(c.maxErrPoint,[c.cx,c.cy]));var direction=V.scale(radial,c.maxErrSigned>0?-1:1);var N=[-direction[1],direction[0]];var tip=c.maxErrPoint;var back=V.sub(tip,V.scale(direction,0.6*fs*Math.sqrt(3)/2));
+                extras.push({type:"polygon",points:[tip,V.add(back,V.scale(N,0.3*fs)),V.sub(back,V.scale(N,0.3*fs))],closed:true,style:"devMarker",layer:"deviation",featureId:c.id});extras.push(LG.primitives.label(V.add(c.maxErrPoint,V.scale(radial,fs)),0,[{text:(c.maxErrSigned>=0?"+":"")+LG.ratios.number(c.maxErrSigned,2)+"pt",sizeFactor:0.75,style:"textWarn"}],c.id));
+            }
+        });}
+        U.each(extras,function(p){if(p.type==="label"){var box=labelBounds(p,fs);area=U.union(area,[box[0]-fs,box[1]+fs,box[2]+fs,box[3]-fs]);}});
         var render=references(model,area,extents);render.primitives=extras;render.dimensionLines=guides;return render;
     }
-    return { references: references, labelBounds: labelBounds, run:run };
+    /** Resolve full-circle fallback only after every label and the legend set the final area. */
+    function circleDisplay(model,render){var area=render.guideArea;var width=area[2]-area[0];var height=area[1]-area[3];var s=model.config.settings;LG.util.each(render.primitives,function(p){if(p.layer!=="circles"){return;}var c=null;LG.util.each(model.circles,function(item){if(item.id===p.featureId){c=item;}});if(!c){return;}var mode=s.circleDisplay;if(mode==="full"&&(c.cx-c.r<area[0]-width/2||c.cx+c.r>area[2]+width/2||c.cy+c.r>area[1]+height/2||c.cy-c.r<area[3]-height/2)){mode="extended";}if(mode!=="full"){var start=c.arcStartDeg-(mode==="extended"?s.circleExtendDeg:0);var end=c.arcEndDeg+(mode==="extended"?s.circleExtendDeg:0);if(end-start<360){p.type="arc";p.startDeg=start;p.endDeg=end;}}});}
+    return { references: references, labelBounds: labelBounds, run:run, circleDisplay:circleDisplay };
 }());

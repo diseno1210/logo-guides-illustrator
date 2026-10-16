@@ -7,7 +7,7 @@ const path=require('node:path');
 const vm=require('node:vm');
 const {loadCore}=require('./load_core');
 const {sourceFiles,bundleFiles,build}=require('../build');
-const {F3,rectangle}=require('./fixtures');
+const {F3,F1,rectangle}=require('./fixtures');
 const ROOT=path.resolve(__dirname,'../..');
 
 /** Small Illustrator DOM double. This checks our calls, never Illustrator's actual behavior. */
@@ -18,9 +18,9 @@ function harness(){
   function tags(item){const list=[];list.add=()=>{const tag={name:'',value:'',remove(){list.splice(list.indexOf(tag),1);}};list.push(tag);return tag;};return list;}
   function pathItems(parent){const list=[];list.add=()=>{
     if(state.failDrawing&&parent.name==='LG Baselines')throw new Error('mock drawing failure');
-    const item={typename:'PathItem',parent,name:'',hidden:false,tags:tags(),setEntirePath(points){this.points=plain(points);},remove(){list.splice(list.indexOf(item),1);doc.pageItems.splice(doc.pageItems.indexOf(item),1);}};
+    const item={typename:'PathItem',parent,name:'',hidden:false,tags:tags(),setEntirePath(points){this.points=plain(points);this.pathPoints=this.points.map(p=>({anchor:p,leftDirection:p,rightDirection:p}));},remove(){list.splice(list.indexOf(item),1);doc.pageItems.splice(doc.pageItems.indexOf(item),1);}};
     list.push(item);doc.pageItems.push(item);return item;
-  };return list;}
+  };list.ellipse=(top,left,width,height)=>{const p=list.add();p.ellipse=[top,left,width,height];return p;};return list;}
   function textFrames(group){const frames=[];frames.add=()=>{
     const text={contents:'',position:[0,0],textRange:{characterAttributes:{}},translate(x,y){this.position=[this.position[0]+x,this.position[1]+y];}};
     Object.defineProperty(text,'geometricBounds',{get(){const size=text.textRange.characterAttributes.size;const [x,y]=text.position;return [x,y+size*0.8,x+text.contents.length*size*0.63,y-size*0.2];}});
@@ -48,6 +48,7 @@ function harness(){
   function Folder(name){this.fsName=name;this.exists=true;}Folder.userData={fsName:'/mock'};
   Object.assign(context,{File,Folder,app:{documents:[doc],activeDocument:doc,textFonts:{getByName(name){fontLookups.push(name);if(name==='ArialMT'||name==='MicrosoftYaHei')return {name};throw new Error('missing font');}}},alert:m=>alerts.push(m),confirm:()=>true,RGBColor:function(){},CMYKColor:function(){},DocumentColorSpace:{CMYK:1},StrokeCap:{BUTTENDCAP:0},ZOrderMethod:{BRINGTOFRONT:0},Transformation:{CENTER:0}});
   vm.runInContext(bundleFiles(sourceFiles(path.join(ROOT,'src/host'))),context);
+  context.PathPointSelection={ANCHORPOINT:1,LEFTDIRECTION:2,RIGHTDIRECTION:3,NOSELECTION:0};
   return {LG,context,plain,doc,artwork,alerts,fontLookups,state,files};
 }
 
@@ -117,5 +118,19 @@ test('built Generate executes the actual read/analyze/draw/store flow in the ES3
   const {context,doc,artwork,alerts,files}=harness();const target=build().find(file=>file.endsWith('LogoGuides_Generate.jsx'));
   vm.runInContext(fs.readFileSync(target,'utf8').replace(/^#target illustrator\n/,''),context,{timeout:5000});
   assert.equal(doc.activeLayer,artwork);assert.equal(doc.layers[0].name,'Logo Guides');assert.equal(doc.layers[0].layers.find(l=>l.name==='LG Baselines').pathItems.length,8);
-  assert.ok(alerts.some(m=>/Reference lines generated: 8/.test(m)));assert.ok(files.get('/mock/LogoGuides/log.txt').includes('M3 Generate OK'));
+  assert.ok(alerts.some(m=>/Reference lines generated: 8/.test(m)));assert.ok(files.get('/mock/LogoGuides/log.txt').includes('M4 Generate OK'));
+});
+
+test('arc uses <=90degree cubics with outgoing right and incoming left handles; ellipse uses y-up bounds',()=>{
+ const {LG,artwork,plain}=harness();const p=LG.hostDraw.shape(artwork,{type:'arc',c:[10,20],r:100,startDeg:0,endDeg:180});assert.equal(p.pathPoints.length,3);const pts=plain(p.pathPoints);assert.deepEqual(pts[0].anchor,[110,20]);assert.ok(pts[0].rightDirection[1]>20);assert.ok(pts[1].leftDirection[0]>10);assert.ok(pts[1].rightDirection[0]<10);assert.deepEqual(pts[0].leftDirection,pts[0].anchor);assert.deepEqual(pts[2].rightDirection,pts[2].anchor);assert.deepEqual(LG.hostDraw.shape(artwork,{type:'circle',c:[10,20],r:30}).ellipse,[50,-20,60,60]);
+});
+
+test('manual circle uses actual anchor selection enums, shared cubic samples, pt/a labels and preserves selection/data',()=>{
+ const {LG,doc,artwork}=harness();const s=LG.config.defaults();LG.hostDraw.generate(doc,LG.analyze(F3(),s),s,doc.selection);const before=LG.json.stringify(LG.hostStore.read(doc));
+ const path=artwork.pathItems.add();const raw=F1().parts[0].contours[0];Object.assign(path,{filled:true,stroked:false,strokeWidth:0,closed:true,pathPoints:raw.points.map(p=>({anchor:p.a,leftDirection:p.l,rightDirection:p.r,selected:1}))});doc.selection=[path];const selection=doc.selection;
+ const chosen=LG.hostManual.selected(doc,s);assert.equal(chosen.anchors.length,4);assert.ok(chosen.samples.length>4);const result=LG.hostManual.circle(doc,s);assert.ok(Math.abs(result.circle.r-100)<.1);assert.equal(doc.activeLayer,artwork);assert.equal(doc.selection,selection);assert.equal(LG.json.stringify(LG.hostStore.read(doc)),before);assert.equal(doc.layers[0].locked,true);
+ const manual=doc.layers[0].layers.find(l=>l.name==='LG Manual');assert.equal(manual.pathItems.length,1);assert.ok(manual.groupItems[0].textFrames[0].contents.includes('a'));assert.match(manual.groupItems[0].textFrames[1].contents,/选中点最大偏差/);
+ path.pathPoints[1].selected=2;path.pathPoints[3].selected=0;assert.equal(LG.hostManual.selected(doc,s).anchors.length,2);assert.throws(()=>LG.hostManual.circle(doc,s),/至少 3/);
+ path.pathPoints.forEach(p=>p.selected=1);doc.layers[0].pathItems[0].remove();LG.hostManual.circle(doc,s);assert.match(manual.groupItems[1].textFrames[0].contents,/pt$/);
+ LG.hostDraw.generate(doc,LG.analyze(F3(),s),s,[path]);assert.ok(doc.layers[0].layers.includes(manual));
 });

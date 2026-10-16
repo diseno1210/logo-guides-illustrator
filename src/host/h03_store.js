@@ -37,5 +37,5 @@ LG.hostStore = (function () {
     function createData(analysis, settings) {
         var stamp = timestamp(); return { schemaVersion: 1, runId: runId(), baseUnit: { value: analysis.baseUnit.value, source: analysis.baseUnit.source, locked: analysis.baseUnit.value !== null && settings.baseUnit.locked }, hiddenFeatures: [], createdAt: stamp, updatedAt: stamp };
     }
-    return { layer: layer, read: read, write: write, tagSources: tagSources, createData: createData };
+    return { layer: layer, read: read, write: write, tagSources: tagSources, createData: createData, runId:runId, timestamp:timestamp };
 }());

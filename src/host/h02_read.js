@@ -68,5 +68,5 @@ LG.hostRead = (function () {
             return { version: 1, units: "pt", colorSpace: color, artboard: [Number(board[0]), Number(board[1]), Number(board[2]), Number(board[3])], parts: parts, warnings: warnings };
         } finally { try { doc.activeLayer = savedLayer; } finally { doc.selection = selected; } }
     }
-    return { selection: selection, sourceObjects: sourceObjects };
+    return { selection: selection, sourceObjects: sourceObjects, inGuides: inGuides };
 }());

@@ -19,7 +19,7 @@ LG.geometry = (function () {
                 contour = source.contours[j];
                 if (!contour || typeof contour.id !== "string" || !contour.id || U.indexOf(ids, contour.id) >= 0 || typeof contour.closed !== "boolean" || !U.isArray(contour.points)) { throw new Error("Invalid geometry contour"); }
                 ids.push(contour.id); rawCount += contour.points.length; points = []; invalid = false;
-                for (k = 0; k < contour.points.length; k += 1) { point = contour.points[k]; if (!point || !validPoint(point.a) || !validPoint(point.l) || !validPoint(point.r)) { invalid = true; break; } points.push(U.clone(point)); }
+                for (k = 0; k < contour.points.length; k += 1) { point = contour.points[k]; if (!point || !validPoint(point.a) || !validPoint(point.l) || !validPoint(point.r)) { invalid = true; break; } points.push({a:point.a.slice(0),l:point.l.slice(0),r:point.r.slice(0)}); }
                 if (invalid) { U.warn(model.warnings, "NON_FINITE_GEOMETRY", "Skipped non-finite contour: " + contour.id); continue; }
                 if (points.length < 2) { U.warn(model.warnings, "DEGENERATE_PATH", "Skipped contour with fewer than two anchors: " + contour.id); continue; }
                 target = { id: contour.id, partId: part.id, closed: contour.closed, points: points, segments: [], bbox: null, polygon: [], length: 0 };
