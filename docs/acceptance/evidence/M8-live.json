@@ -1,0 +1,58 @@
+{
+  "date": "2026-10-17T02:08:05.457Z",
+  "mode": "live",
+  "checks": [
+    {
+      "name": "real configured provider request",
+      "status": "pass",
+      "detail": {
+        "show": 3,
+        "hide": 9,
+        "targets": 0,
+        "groups": 2,
+        "notesCharacters": 183
+      }
+    },
+    {
+      "name": "real apply button and native target drawing preserve source geometry",
+      "status": "pass",
+      "detail": {
+        "primitives": 16,
+        "targetPrimitives": 0,
+        "hidden": 9,
+        "status": "AI 建议已应用 · 16 图元",
+        "native": {
+          "targets": 0,
+          "hidden": 12
+        }
+      }
+    }
+  ],
+  "runtime": {
+    "versions": {
+      "node": "17.7.2",
+      "v8": "9.9.115.10",
+      "uv": "1.43.0",
+      "zlib": "1.2.11",
+      "brotli": "1.0.9",
+      "ares": "1.18.1",
+      "modules": "102",
+      "nghttp2": "1.47.0",
+      "napi": "8",
+      "llhttp": "6.0.4",
+      "openssl": "3.0.2+quic",
+      "icu": "70.1",
+      "unicode": "14.0",
+      "cep": "12.0.0",
+      "chromium": "99.0.4844.84"
+    },
+    "cep": true
+  },
+  "status": "pass",
+  "connection": {
+    "provider": "openai",
+    "baseUrl": "https://api.atlascloud.ai/v1",
+    "model": "openai/gpt-6-luna",
+    "metadataSource": "Confirmed from project CEP form after the live run; no key included"
+  }
+}
