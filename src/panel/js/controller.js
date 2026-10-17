@@ -103,7 +103,7 @@
         state.hidden = state.docData.hiddenFeatures;
       });
     }
-    async function select(id) { return task(async () => { const result = await call('selectFeature',id,state.documentToken); state.status = result.selected?'已选中 '+id+' · 临时解锁对应辅助图层，下次面板操作恢复锁定':'此特征已隐藏，无法选中'; return result; }); }
+    async function select(id) { return task(async () => { const result = await call('selectFeature',id,state.documentToken); state.status = result.selected?'已选中 '+id+' · 临时解锁对应辅助图层，下次面板操作恢复锁定':result.matched===0?'该特征当前未绘制（对应生成内容已关闭）':'此特征已隐藏，无法选中'; return result; }); }
     async function clear(mode) {
       return task(async function () {
         await call('clear',mode,state.documentToken);
