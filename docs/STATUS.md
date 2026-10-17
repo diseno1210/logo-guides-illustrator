@@ -1,6 +1,6 @@
 # 开发状态
 
-更新日期：2026-10-16。当前授权：继续验收与开发，能代理完成的工作自主执行，确需用户操作时再交接；仍按M0–M9验收顺序推进。状态：未开始 / 进行中 / 自动验证通过 / 待 Illustrator 实测 / 已验收。
+更新日期：2026-10-17。当前授权：继续验收与开发，能代理完成的工作自主执行，确需用户操作时再交接；仍按M0–M9验收顺序推进。状态：未开始 / 进行中 / 自动验证通过 / 待 Illustrator 实测 / 已验收。
 
 | 里程碑 | 状态 | 验证与提交 |
 | --- | --- | --- |
@@ -11,7 +11,7 @@
 | M4 | 已验收 | `349a828`；129项测试/Chrome通过，F10 <300ms |
 | M5 | 已验收 | `bb4e849`；136项测试/Chrome通过，F4角度/F3目标线/图例通过 |
 | M6 | 已验收 | `6da8b2a`实现、`c4784b0`原生修复；154项测试、6份ASCII/ES3脚本、18项原生DOM、真实窗口/撤销与用户拖动均通过；v0.1.0 |
-| M7 | 进行中 | 依赖 M6；166项自动测试、面板构建/ES3通过；F9原生 read→V8等价计算→draw 758ms；F10 ExtendScript 全计算117s仅作回退基线，Node/V8计算307ms；CEP面板实际打开待验证 |
+| M7 | 已验收 | v0.2.0；171项测试、9份ES3产物通过；真实CEP F10刷新1092ms/101图元，F9原生图元误差≤3.56e-13；14项CEP检查通过，证据见acceptance/M7.md |
 | M8 | 未开始 | 依赖 M7 与真实 AI 调用 |
 | M9 | 未开始 | 依赖 M8 与干净机器安装验证 |
 
@@ -52,7 +52,7 @@
 
 ## 当前限制与下一步
 
-M0–M6已满足各自门槛。M7 面板源码和构建产物已具备，自动测试覆盖通信编码、过期 token、共享 core、隐藏匹配、精选上限、F1–F10 与 BOATCHIN；原生 F9 桥接已通过，F10 的 ExtendScript 全计算仍保留为性能反例，CEP V8 性能测试为 307ms。真实 CEP 面板 UI 打开、按钮操作和 2000 锚点完整 read→V8 compute→draw 仍待 Illustrator CEP 实测，未进入 M8。
+M0–M7已满足各自门槛。当前交付v0.2.0，M8 AI和M9签名安装尚未实现。M7已完成实际CEP UI、桥接、特征选中/显隐与2000锚点性能实测；Notion日志与GitHub随阶段更新。
 
 ## M1 真实 Illustrator 验证（2026-10-16）
 
@@ -140,3 +140,15 @@ M0–M6已满足各自门槛。M7 面板源码和构建产物已具备，自动�
 - 用户确认拖动“能吸附”，后续原生读取发现交互副本不带LG_SOURCE，Refresh只包含2个带标签原来源；准确记录差异，不以DOM duplicate推断Alt拖动。
 - 用户另确认已移动原圆锚点。实际读取(320,250)→(316.596625766871,250)，Refresh图元13→20，a=20与runId保持不变，完成第4项。证据追加至`acceptance/evidence/M6-user-drag.json`。
 - 第14.5节12项完成；2000点耗时99,609ms依原文列入M7优化，M6已验收，版本0.1.0。锁文件仅更新根包版本，依赖未变；不创建Git tag、远程或推送。
+
+## M7 真实 CEP 验收（2026-10-17）
+
+- Windows / Illustrator 30.0.0 / CEP12 / Chromium99 / Node17.7.2 / V8 9.9；用户打开面板后通过该面板本地调试端口执行真实CSInterface与DOM操作。
+- 171项自动测试、构建及9份ES3产物通过；F1–F10及BOATCHIN的共享core比较保持类型/数量一致与数值误差≤1e-6。
+- 14项真实CEP检查通过。F9 18图元，面板与原生ExtendScript最大数值差3.552713678800501e-13；实际选中1个原生对象。
+- F10 50部件/2000锚点：生成986.7ms，刷新1092.2ms（read590 / compute111.3 / draw105ms，其余为序列化、通信与校验），101图元；默认功能与采样未降低。
+- 修复无变化选区反复赋值触发的原生锚点重选；宿主用原生无描边geometricBounds选择画板，退化检查提前停止重复采样。原始Geometry坐标和core算法不变。
+- 修复临时选择被图层锁定取消；对应辅助层临时解锁，下次面板操作或重新连接恢复。新增文档身份校验与明确的连接按钮，防止延时刷新/清除/设a作用于另一文档。
+- 旧M7-native中的758ms是纯ExtendScript探针，598ms计时包含read，不能称为V8；旧测试只检查matched，未验证selected。已纠正并保留历史记录。
+- 原始结果/实际CEP截图：dist/native-acceptance/m7-cep-final/；入库摘要：[M7-cep.json](acceptance/evidence/M7-cep.json)。独立测试文档已关闭，测试前的全局设置与dump已恢复。
+- 命令：node tools/run_tests.js；node tools/build.js；node tools/check_es3.js；node tools/cep_acceptance.js dist/native-acceptance/m7-cep-final。

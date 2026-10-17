@@ -1,8 +1,8 @@
 {
   "name": "logo-guides",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
-  "description": "Illustrator logo construction guides — v0.1 scripts",
+  "description": "Illustrator logo construction guides — v0.2 CEP panel and scripts",
   "engines": {
     "node": ">=20"
   },

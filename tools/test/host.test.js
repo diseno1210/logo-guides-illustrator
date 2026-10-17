@@ -135,3 +135,24 @@ test('file writes close on success/failure and do not write after open failure',
   file.open=()=>false;assert.throws(()=>LG.hostEnv.writeUTF8(file,'x'),/Cannot open/);assert.equal(closes,1);assert.equal(writes,1);
   file.open=()=>true;file.write=()=>true;LG.hostEnv.writeUTF8(file,'x');assert.equal(closes,2);assert.equal(file.encoding,'UTF-8');
 });
+
+test('host read avoids duplicate sampling but preserves tiny paths and coincident-anchor loops',()=>{
+  const item=hostPath(); const doc=document([item]); const {LG,plain}=harness(doc);
+  const old=LG.bezier.arcTable; let tables=0;
+  LG.bezier.arcTable=p=>{tables++;return old(p);};
+  const expected=plain(LG.hostRead.selection(doc,{})); assert.equal(tables,0);
+  let anchorReads=0, leftReads=0, rightReads=0;
+  for(const p of item.pathPoints){for(const [key,count] of [['anchor',()=>anchorReads++],['leftDirection',()=>leftReads++],['rightDirection',()=>rightReads++]]){const value=p[key];Object.defineProperty(p,key,{get(){count();return value;}});}}
+  assert.deepEqual(plain(LG.hostRead.selection(doc,{})),expected);
+  assert.deepEqual([anchorReads,leftReads,rightReads],[4,4,4]);
+  item.pathPoints=[{anchor:[0,0],leftDirection:[0,0],rightDirection:[10,20]},{anchor:[0,0],leftDirection:[-10,20],rightDirection:[0,0]}];
+  assert.equal(LG.hostRead.selection(doc,{}).parts.length,1); assert.ok(tables>0);
+  item.pathPoints=item.pathPoints.map(()=>({anchor:[0,0],leftDirection:[0,0],rightDirection:[0,0]}));
+  assert.throws(()=>LG.hostRead.selection(doc,{}),/No supported paths/);
+});
+
+test('native path bounds select the artboard without recomputing cubic bounds',()=>{
+  const item=hostPath(320,0,20,100);item.geometricBounds=[320,100,340,0];const doc=document([item]);const {LG,plain}=harness(doc);
+  LG.bezier.bounds=()=>{throw Error('Duplicate native bounds calculation');};
+  assert.deepEqual(plain(LG.hostRead.selection(doc,{}).artboard),[300,200,600,-200]);
+});

@@ -3,7 +3,7 @@
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Logo 辅助线</title><link rel="stylesheet" href="css/panel.css"></head>
 <body>
 <header><div><span class="eyebrow">LOGO GUIDES</span><h1>Logo 辅助线</h1></div><span class="version">M7 · CEP</span></header>
-<nav class="actions"><button id="generate" class="primary">生成</button><button id="refresh">刷新来源</button><button id="dump">导出 dump</button></nav>
+<nav class="actions"><button id="generate" class="primary">生成</button><button id="refresh">刷新来源</button><button id="dump">导出 dump</button><button id="connect" title="切换 Illustrator 文档后重新连接">连接当前文档</button></nav>
 <output id="status" role="status" aria-live="polite">正在连接 Illustrator…</output>
 <main>
 <section><h2>基准单位 <i>a</i></h2><div class="row"><label>a / pt<input id="baseValue" type="number" min="0.000001" step="any"></label><label class="check"><input id="baseLock" type="checkbox">锁定 a</label><button id="setBase">应用</button></div><div class="row"><button id="autoBase">自动选择</button><button id="measure">读取选中宽高 / 候选</button></div><div id="candidates" class="chips"></div><div id="measurements" class="chips"></div></section>

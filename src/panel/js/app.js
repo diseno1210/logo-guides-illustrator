@@ -46,6 +46,7 @@
     if(!window.__adobe_cep__)throw new Error('请在 Illustrator 的「窗口 → 扩展」中打开此面板。');
     controller=LGPanel.create(LG,LGPanel.bridge(new CSInterface()),sync);
     window.logoGuidesPanel=controller;
+    $('connect').onclick=()=>action(()=>controller.init());
     $('generate').onclick=()=>action(()=>controller.run('selection'));
     $('refresh').onclick=()=>action(()=>controller.run('sources'));
     $('measure').onclick=()=>action(()=>controller.measure());

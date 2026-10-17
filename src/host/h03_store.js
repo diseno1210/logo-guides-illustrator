@@ -34,6 +34,8 @@ LG.hostStore = (function () {
     function sameLiveLayer(a,b){try{return a===b;}catch(invalidLayer){return false;}}
     function restoreLocks(doc,locks){var current=layerLocks(doc);var i;for(i=locks.length-1;i>=0;i-=1){(function(snapshot){var target;try{target=snapshot.layer;}catch(invalidLayer){return;}LG.util.each(current,function(item){if(sameLiveLayer(item.layer,target)){item.layer.locked=snapshot.locked;}});}(locks[i]));}}
     function restoreActiveLayer(doc,saved){var current=layerLocks(doc);var found=false;LG.util.each(current,function(item){if(sameLiveLayer(item.layer,saved)){found=true;}});if(found){doc.activeLayer=saved;return;}var i;for(i=0;i<doc.layers.length;i+=1){if(!LG.hostRead.inGuides(doc.layers[i])){doc.activeLayer=doc.layers[i];return;}}}
+    /** Avoid reselection of thousands of unchanged native anchors on every refresh. */
+    function restoreSelection(doc,items){var current=doc.selection;var same=current&&items&&current.length===items.length;var i;if(same){for(i=0;i<items.length;i+=1){try{if(current[i]!==items[i]){same=false;break;}}catch(invalidSelectedItem){same=false;break;}}}if(!same){doc.selection=items;}}
     /** Save contract Doc Data in the reserved hidden path. */
     function write(root, data) {
         var item = dataPath(root);
@@ -49,5 +51,5 @@ LG.hostStore = (function () {
     function saveSettings(value){var resolved=LG.config.resolve(value).settings;LG.hostEnv.writeUTF8(new File(LG.hostEnv.dataFolder().fsName+"/settings.json"),LG.json.stringify(resolved,null,2)+"\n","w");return resolved;}
     /** Refresh reads matching tags across the document and ignores the current partial selection. */
     function sources(doc,id){var list=[];var i;var j;var item;for(i=0;i<doc.pageItems.length;i+=1){item=doc.pageItems[i];if(LG.hostRead.inGuides(item)){continue;}for(j=0;j<item.tags.length;j+=1){if(item.tags[j].name==="LG_SOURCE"&&item.tags[j].value===id){list.push(item);break;}}}return LG.util.filterArr(list,function(source){var p=source.parent;while(p&&p.typename!=="Document"){if(LG.util.indexOf(list,p)>=0){return false;}p=p.parent;}return true;});}
-    return { layer: layer, read: read, write: write, tagSources: tagSources, createData: createData, runId:runId, timestamp:timestamp, settings:settings, saveSettings:saveSettings, sources:sources, layerLocks:layerLocks,restoreLocks:restoreLocks,restoreActiveLayer:restoreActiveLayer };
+    return { layer: layer, read: read, write: write, tagSources: tagSources, createData: createData, runId:runId, timestamp:timestamp, settings:settings, saveSettings:saveSettings, sources:sources, layerLocks:layerLocks,restoreLocks:restoreLocks,restoreActiveLayer:restoreActiveLayer,restoreSelection:restoreSelection };
 }());

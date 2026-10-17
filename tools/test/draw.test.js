@@ -78,7 +78,7 @@ test('built Generate executes the actual read/analyze/draw/store flow in the ES3
   const {context,doc,artwork,alerts,files}=harness();const target=build().find(file=>file.endsWith('LogoGuides_Generate.jsx'));
   vm.runInContext(fs.readFileSync(target,'utf8').replace(/^#target illustrator\n/,''),context,{timeout:5000});
   assert.equal(doc.activeLayer,artwork);assert.equal(doc.layers[0].name,'Logo Guides');assert.equal(doc.layers[0].layers.find(l=>l.name==='LG Baselines').pathItems.length,8);
-  assert.ok(alerts.some(m=>/参考线: 8/.test(m)));assert.ok(files.get('/mock/LogoGuides/log.txt').includes('M6 Generate OK'));assert.ok(files.has('/mock/LogoGuides/settings.json'));
+  assert.ok(alerts.some(m=>/参考线: 8/.test(m)));assert.ok(files.get('/mock/LogoGuides/log.txt').includes(context.LG.milestone+' Generate OK'));assert.ok(files.has('/mock/LogoGuides/settings.json'));
 });
 
 test('arc uses <=90degree cubics with outgoing right and incoming left handles; ellipse uses y-up bounds',()=>{

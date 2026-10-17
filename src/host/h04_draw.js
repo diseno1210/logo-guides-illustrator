@@ -82,7 +82,7 @@ LG.hostDraw = (function () {
             return data;
         } finally {
             try { if(!completed){LG.hostStore.restoreLocks(doc,locks);}root.locked = completed ? settings.lockLayer : wasLocked;if(bg){bg.locked=completed?settings.lockLayer:false;} }
-            finally { try { LG.hostStore.restoreActiveLayer(doc,savedLayer); } finally { doc.selection = completed ? sources : savedSelection; } }
+            finally { try { LG.hostStore.restoreActiveLayer(doc,savedLayer); } finally { LG.hostStore.restoreSelection(doc,completed ? sources : savedSelection); } }
         }
     }
     return { generate: generate, color: color, label: label, style: style, shape:shape };

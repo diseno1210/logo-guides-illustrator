@@ -1,6 +1,6 @@
 # Logo 辅助线生成器
 
-面向 Adobe Illustrator 的 Logo / 字标辅助线工具。**M0–M6已验收，v0.1脚本可用**。M7 CEP 面板已完成源码与自动验证，正在进行 Illustrator CEP 实测；M8–M9按计划继续。
+面向 Adobe Illustrator 的 Logo / 字标辅助线工具。**M0–M7已验收，v0.2 CEP 面板和脚本可用**。M8 AI 与 M9 安装发布尚未实现。
 
 ## 开发入口
 
@@ -9,7 +9,8 @@
 - [当前状态](docs/STATUS.md)、[决策记录](docs/DECISIONS.md)、[变更记录](docs/CHANGELOG.md)。
 - [使用说明](docs/USER_GUIDE.md)：仅描述实际可用能力。
 - [M6用户验收清单](docs/acceptance/M6.md)：按原文第14.5节完成12项宿主验证。
-- [M7实施计划](docs/implementation/M7.md)：面板、桥接与性能门槛。
+- [M7实施计划](docs/implementation/M7.md)与[验收结果](docs/acceptance/M7.md)。
+- [Notion 开发工作日志](https://app.notion.com/p/3fce02e6228b816ea7abc73da5a388dd)：每个大阶段完成后同步。
 
 ## 环境与命令
 
@@ -38,4 +39,4 @@ npm run fixture -- tools/samples/illustrator-boatchin.geometry.json
 
 构建后从Illustrator“文件 › 脚本 › 其他脚本”运行`dist/scripts/LogoGuides_Generate.jsx`。配套有Refresh、Clear、SetBaseUnit、CircleFromSelection和DumpGeometry。详细步骤见使用说明；自动验证与真实宿主证据分别记录在STATUS。
 
-自动测试166项通过，F10预建2000锚点Geometry的Node/V8完整analyze约307ms；真实Illustrator ExtendScript全计算约117秒，作为M7迁移性能基线。原生RGB/CMYK检查18项通过，真实生成窗口、Ctrl+Z及用户拖动/吸附均已验收。M7 F9原生桥接总计758ms；CEP面板实际UI仍待实测。
+自动测试171项通过，9份ES3产物通过检查；真实 Illustrator 30 / CEP12 中 F10（2000锚点）生成约987ms、刷新约1092ms，101个图元。F9面板与原生ExtendScript图元最大数值差3.56e-13；生成、显隐/选中、样式、滑杆、dump和三种清除已实测。[M7验收证据](docs/acceptance/M7.md)。

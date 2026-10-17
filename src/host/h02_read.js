@@ -17,20 +17,23 @@ LG.hostRead = (function () {
     }
     /** Read selected top-level sources into Geometry JSON v1; do not mutate originals. */
     function selection(doc, settings, sources) {
-        var U = LG.util; var cfg = LG.config.resolve(settings); var selected = doc.selection; var roots = sources || sourceObjects(doc); var parts = []; var warnings = []; var skipped = {}; var anchorCount = 0; var approvedLarge = false; var savedLayer = doc.activeLayer; var geometryBox = null; var i; var j; var board; var boards; var center; var color;
+        var U = LG.util; var cfg = LG.config.resolve(settings); var selected = doc.selection; var roots = sources || sourceObjects(doc); var parts = []; var warnings = []; var skipped = {}; var anchorCount = 0; var approvedLarge = false; var savedLayer = doc.activeLayer; var changedSelection = false; var geometryBox = null; var i; var j; var board; var boards; var center; var color;
         /** Count unsupported objects by type. */
         function skip(type) { skipped[type] = (U.has(skipped, type) ? skipped[type] : 0) + 1; }
         /** Snapshot pathPoints once; empty and zero-length paths are omitted. */
         function pathContour(path, partId, index) {
-            var collection = path.pathPoints; var length = collection.length; var points = []; var k; var p; var q; var total = 0; var controls; var box = null;
+            var collection = path.pathPoints; var length = collection.length; var points = []; var k; var p; var q; var a; var l; var r; var closed = !!path.closed; var total = 0; var controls; var chord; var box = path.geometricBounds; var nativeBox = box && box.length === 4 && U.finite(Number(box[0])) && U.finite(Number(box[1])) && U.finite(Number(box[2])) && U.finite(Number(box[3]));
+            box = nativeBox ? [Number(box[0]), Number(box[1]), Number(box[2]), Number(box[3])] : null;
             if (length < 2) { return null; }
             anchorCount += length;
             if (anchorCount > 20000 && !approvedLarge) { if (!confirm("选区超过 20000 个锚点，可能很慢。继续导出？ / More than 20000 anchors. Continue?")) { throw new Error("已取消导出 / Export cancelled."); } approvedLarge = true; }
-            for (k = 0; k < length; k += 1) { p = collection[k]; points.push({ a: [Number(p.anchor[0]), Number(p.anchor[1])], l: [Number(p.leftDirection[0]), Number(p.leftDirection[1])], r: [Number(p.rightDirection[0]), Number(p.rightDirection[1])] }); }
-            for (k = 0; k < (path.closed ? length : length - 1); k += 1) { p = points[k]; q = points[(k + 1) % length]; controls = [p.a, p.r, q.l, q.a]; total += LG.bezier.arcTable(controls).length; box = U.union(box, LG.bezier.bounds(controls, cfg.EPS)); }
+            for (k = 0; k < length; k += 1) { p = collection[k]; a = p.anchor; l = p.leftDirection; r = p.rightDirection; points.push({ a: [Number(a[0]), Number(a[1])], l: [Number(l[0]), Number(l[1])], r: [Number(r[0]), Number(r[1])] }); }
+            // Length is only a degeneracy guard here. Once its lower bound exceeds EPS,
+            // avoid building 65-entry sampling tables that the V8 core will rebuild.
+            for (k = 0; k < (closed ? length : length - 1); k += 1) { p = points[k]; q = points[(k + 1) % length]; controls = [p.a, p.r, q.l, q.a]; if (total <= cfg.EPS) { chord = U.hypot(q.a[0] - p.a[0], q.a[1] - p.a[1]); total += chord > cfg.EPS ? chord : LG.bezier.arcTable(controls).length; } if (!nativeBox) { box = U.union(box, LG.bezier.bounds(controls, cfg.EPS)); } }
             if (!(total > cfg.EPS)) { return null; }
             geometryBox = U.union(geometryBox, box);
-            return { id: partId + "c" + index, closed: !!path.closed, points: points };
+            return { id: partId + "c" + index, closed: closed, points: points };
         }
         /** Convert a path or compound to one part. */
         function readPart(item, sourceIndex, kind) {
@@ -52,7 +55,7 @@ LG.hostRead = (function () {
             } else if (type === "PathItem" || type === "CompoundPathItem") { readPart(item, sourceIndex, textOutline ? "textOutline" : null); }
             else if (type === "TextFrame") {
                 if (!cfg.settings.autoOutlineText) { skip("TextFrame"); return; }
-                try { duplicate = item.duplicate(); outline = duplicate.createOutline(); duplicate = null; visit(outline, sourceIndex, true); }
+                try { changedSelection = true; duplicate = item.duplicate(); outline = duplicate.createOutline(); duplicate = null; visit(outline, sourceIndex, true); }
                 catch (error) { if (!outline && duplicate) { throw new Error("文字临时轮廓化失败，请手动转曲 / Outline text manually. " + String(error)); } throw error; }
                 finally { try { if (outline) { outline.remove(); } } finally { if (duplicate) { duplicate.remove(); } } }
             } else { skip(type || "Unknown"); }
@@ -66,7 +69,7 @@ LG.hostRead = (function () {
             for (i = 0; i < boards.length; i += 1) { if (U.contains(boards[i].artboardRect, center[0], center[1])) { board = boards[i].artboardRect; break; } }
             color = doc.documentColorSpace === DocumentColorSpace.CMYK ? "CMYK" : "RGB";
             return { version: 1, units: "pt", colorSpace: color, artboard: [Number(board[0]), Number(board[1]), Number(board[2]), Number(board[3])], parts: parts, warnings: warnings };
-        } finally { try { doc.activeLayer = savedLayer; } finally { doc.selection = selected; } }
+        } finally { if (changedSelection) { try { doc.activeLayer = savedLayer; } finally { doc.selection = selected; } } }
     }
     return { selection: selection, sourceObjects: sourceObjects, inGuides: inGuides };
 }());

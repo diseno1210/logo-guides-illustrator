@@ -1,13 +1,26 @@
 {
   "date": "2026-10-16",
   "fixture": "F9",
-  "status": "static_and_native_bridge_pass",
-  "timingMs": {"read": 48, "panelEquivalentCompute": 598, "draw": 135, "total": 758},
-  "checks": ["single read/draw", "feature visibility", "feature selection", "doc data persistence", "data clear"],
+  "status": "historical_host_only_baseline_not_cep",
+  "timingMs": {
+    "read": 48,
+    "readPlusCompute": 598,
+    "draw": 135,
+    "total": 758
+  },
+  "checks": [
+    "single read/draw in host",
+    "feature visibility metadata",
+    "feature target matched (actual selection not verified)",
+    "doc data persistence",
+    "data clear"
+  ],
   "f10ExtendScriptFallbackMs": 117172,
   "f10V8NodeComputeMs": 307,
   "f10V8PrimitiveCount": 101,
   "cepUi": "pending",
   "cepF10EndToEnd": "pending",
-  "evidenceDirectory": "dist/native-acceptance/m7-bridge-02"
+  "evidenceDirectory": "dist/native-acceptance/m7-bridge-02",
+  "runtime": "ExtendScript",
+  "correction": "The old compute timer included read time; the probe computed in ExtendScript. It hid a feature before selection and checked matched only. This record does not verify CEP/V8 or actual native selection."
 }

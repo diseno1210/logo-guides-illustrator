@@ -108,7 +108,7 @@ F10真实2000锚点生成99,609ms，目标15秒未达到。依第14.5节第9项�
 
 ## D019 — M7 面板计算边界与性能证据（2026-10-16）
 
-面板计算必须使用 V8 中的同一份 core；ExtendScript host 只读取 Geometry、校验并执行一次绘制。F10 在 Illustrator ExtendScript 中全量计算约 117 秒，不能作为 CEP 面板性能结论，因此只保留为回退基线；Node V8 对同一预建 2000 锚点 Geometry 的 `preAnalyze → analyze` 为 307ms。F9 原生 host read、等价 V8 计算和单次 draw 总计 758ms，作为桥接证据。真实 CEP UI 和 2000 锚点完整 CEP 链仍需在 Illustrator 面板中实测，未提前标记 M7 已验收。
+面板计算必须使用 V8 中的同一份 core；ExtendScript host 只读取 Geometry、校验并执行一次绘制。F10 在 Illustrator ExtendScript 中全量计算约 117 秒，不能作为 CEP 面板性能结论，因此只保留为回退基线；Node V8 对同一预建 2000 锚点 Geometry 的 `preAnalyze → analyze` 为 307ms。2026-10-17复核更正：旧F9的758ms探针全部运行在ExtendScript中，598ms包含read，且只检查matched而未验证真实selected，均不能作为CEP验收。保留历史数据并纠正命名；真实CEP实测见M7-cep.json，F10完整刷新1092.2ms。
 
 ## D020 — 面板隐藏匹配与异常输入（2026-10-16）
 
@@ -117,3 +117,17 @@ F10真实2000锚点生成99,609ms，目标15秒未达到。依第14.5节第9项�
 ## D021 — GitHub 远程与阶段推送（2026-10-16）
 
 用户要求每个阶段完成后将源码推送到自己的 GitHub，供其他 agent 审查。创建私有仓库 `diseno1210/logo-guides-illustrator`，保留本地 `main`，绑定为 `origin` 并推送当前提交 `0400d09`；不创建发布 tag。后续阶段统一在验证、文档和证据更新后提交并推送 `main`。
+
+## D022 — M7 原生选中与读取优化（2026-10-17）
+
+Illustrator会在锁定祖先图层时立即取消选中。点击特征时暂时解锁对应辅助图层的祖先，其他分支不变；下一次面板操作或重新连接恢复原锁定，状态栏明确说明。隐藏特征不强行显示。
+
+无变化的doc.selection赋值会触发成千锚点重选，因此读几何只在临时文字轮廓化实际改变选区时恢复，绘制结束只在引用列表变化时设置选区。读取使用原生path.geometricBounds选择画板，缺少原生bounds时仍计算解析极值；长度只用于退化判断，超过EPS即不再建弧长表，锚点重合但控制点不重合时仍计算原64段表。宽高/两点候选只在显式点击读取时扫描，常规刷新不重复扫描。
+
+保留原7个LGHost函数和原参数，read允许追加URI编码options（Settings、文档token、measurements开关），写操作可追加文档token；均向后兼容，Geometry/Settings/Doc Data/analyze契约不变。base操作在busy检查后才修改设置，并在同一任务内写入和刷新。
+
+## D023 — 精选评分与日志同步（2026-10-17）
+
+原文没有给出精选排序公式：线按边界100、视觉50、支持部件数×10、平段长度/S累加；构造线按edgeCount，与线共享数量上限。圆用既有score；角度优先pair（100000）再edgeLength；同分按id字典序。笔画/间距及其他未限制类别全保留。筛选现有真实图元，标签保持既有布局，不另行改写布局算法。
+
+用户要求每个大阶段完成后推送GitHub并同步Notion工作日志。固定使用README与DEVELOPMENT_WORKFLOW中的日志页；记录阶段状态、提交链接、验证命令、真实结果、限制和下一步。原始Notion规范正文不修改；GitHub推送成功后才记录为已同步。

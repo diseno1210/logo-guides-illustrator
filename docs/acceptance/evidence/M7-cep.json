@@ -1,0 +1,165 @@
+{
+  "date": "2026-10-17T01:23:58.507Z",
+  "runtime": {
+    "versions": {
+      "node": "17.7.2",
+      "v8": "9.9.115.10",
+      "uv": "1.43.0",
+      "zlib": "1.2.11",
+      "brotli": "1.0.9",
+      "ares": "1.18.1",
+      "modules": "102",
+      "nghttp2": "1.47.0",
+      "napi": "8",
+      "llhttp": "6.0.4",
+      "openssl": "3.0.2+quic",
+      "icu": "70.1",
+      "unicode": "14.0",
+      "cep": "12.0.0",
+      "chromium": "99.0.4844.84"
+    },
+    "cep": true,
+    "url": "%APPDATA%/Adobe/CEP/extensions/local.logoguides.panel/index.html",
+    "illustrator": "30.0.0"
+  },
+  "checks": [
+    {
+      "name": "F9 native fixture setup",
+      "status": "pass",
+      "detail": "ready"
+    },
+    {
+      "name": "real CEP generate button",
+      "status": "pass",
+      "detail": {
+        "timing": {
+          "readMs": 2,
+          "readProfile": {
+            "sourcesMs": 0,
+            "geometryMs": 1
+          },
+          "computeMs": 20.399999999906868,
+          "drawMs": 14,
+          "totalMs": 145
+        },
+        "primitives": 18,
+        "status": "完成 · 18 图元 · a=20 pt · 145 ms"
+      }
+    },
+    {
+      "name": "real CEP V8 and native ExtendScript primitive parity <=1e-6",
+      "status": "pass",
+      "detail": {
+        "primitives": 18,
+        "maxNumericError": 3.552713678800501e-13
+      }
+    },
+    {
+      "name": "visible feature actual native selection",
+      "status": "pass",
+      "detail": {
+        "matched": 1,
+        "selected": 1,
+        "temporarilyUnlocked": true
+      }
+    },
+    {
+      "name": "hide, refresh geometry match, show",
+      "status": "pass",
+      "detail": {
+        "hidden": 0
+      }
+    },
+    {
+      "name": "manual a and automatic a",
+      "status": "pass",
+      "detail": {
+        "value": 20,
+        "source": "auto-stem",
+        "locked": false
+      }
+    },
+    {
+      "name": "style and curated refresh, geometry dump",
+      "status": "pass",
+      "detail": {
+        "parts": 2,
+        "features": 12
+      }
+    },
+    {
+      "name": "switched native document rejects delayed refresh and clear",
+      "status": "pass",
+      "detail": {
+        "rejected": 3
+      }
+    },
+    {
+      "name": "actual UI measurements, visibility, selection, style, slider and dump buttons",
+      "status": "pass",
+      "detail": {
+        "candidates": 1,
+        "status": "已导出 %APPDATA%/LogoGuides/geometry_dump.json"
+      }
+    },
+    {
+      "name": "clear UI auto",
+      "status": "pass",
+      "detail": {
+        "status": "完成 · 18 图元 · a=20 pt · 54 ms",
+        "hasData": true
+      }
+    },
+    {
+      "name": "clear UI all",
+      "status": "pass",
+      "detail": {
+        "status": "完成 · 18 图元 · a=20 pt · 86 ms",
+        "hasData": true
+      }
+    },
+    {
+      "name": "clear UI data",
+      "status": "pass",
+      "detail": {
+        "status": "已清除",
+        "hasData": false
+      }
+    },
+    {
+      "name": "F10 native fixture setup",
+      "status": "pass",
+      "detail": "ready"
+    },
+    {
+      "name": "F10 real CEP generation and refresh <=3000ms",
+      "status": "pass",
+      "detail": {
+        "generate": {
+          "readMs": 476,
+          "readProfile": {
+            "sourcesMs": 3,
+            "geometryMs": 472
+          },
+          "computeMs": 132.5,
+          "drawMs": 155,
+          "totalMs": 986.7000000001863
+        },
+        "refresh": {
+          "readMs": 590,
+          "readProfile": {
+            "sourcesMs": 6,
+            "geometryMs": 582
+          },
+          "computeMs": 111.29999999981374,
+          "drawMs": 105,
+          "totalMs": 1092.2000000001863
+        },
+        "primitives": 101
+      }
+    }
+  ],
+  "status": "pass",
+  "evidenceDirectory": "dist/native-acceptance/m7-cep-final",
+  "screenshotSHA256": "9b37de599566dfc42ec6ba188f0efab19ebf99098cca1e80ba67835da4c0e69a"
+}
