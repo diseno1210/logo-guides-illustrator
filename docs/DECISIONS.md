@@ -6,7 +6,7 @@
 
 F-1 使用会话内地址记忆及 Anthropic 只读地址，切回无历史 OpenAI 地址时为空，沿用原校验；不改变 ai.json。F-2 仅按现有 matched/selected 返回值区分未绘制与隐藏。两项独立提交；不改锁定 a 语义、宿主版本范围、算法或 host。
 
-短面板实测后减少垂直间距，并限制摘要可视高度32px，避免展开摘要形成外层滚动；原有 number 输入属性保留，数值错误沿用现有JS校验而不套用 stepMismatch 着色。版本保留v0.3.2，开发分支只做本地提交，不签名、不推送、不更新外部日志。详见[实施](implementation/DARK_COMPACT_PANEL.md)与[验收](acceptance/DARK_COMPACT_PANEL.md)。
+短面板实测后减少垂直间距，并限制摘要可视高度32px，避免展开摘要形成外层滚动；原有 number 输入属性保留，数值错误沿用现有JS校验而不套用 stepMismatch 着色。版本保留v0.3.2，开发验收阶段只做本地提交，不签名、不推送、不更新外部日志；用户随后单独授权将已验收改动同步GitHub main，其他发布边界保持。详见[实施](implementation/DARK_COMPACT_PANEL.md)与[验收](acceptance/DARK_COMPACT_PANEL.md)。
 
 ## D029 — 用户追加圆弧、线宽与单一实测标注（2026-10-17）
 
