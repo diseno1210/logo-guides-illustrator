@@ -48,7 +48,7 @@ function renderAnalysis(geometry, settings = {}, suppliedResult) {
   const { LG, plain } = loadCore();
   const result = suppliedResult || plain(LG.analyze(geometry, settings));
   const resolved = plain(LG.config.resolve(settings).settings);
-  const styles = plain(LG.styles.preset(resolved.stylePreset));
+  const styles = plain(LG.styles.resolve(resolved,result.render.strokeUnit));
   const render = result.render;
   let viewport=render.guideArea.slice();
   const include=p=>{viewport=[Math.min(viewport[0],p[0]),Math.max(viewport[1],p[1]),Math.max(viewport[2],p[0]),Math.min(viewport[3],p[1])];};

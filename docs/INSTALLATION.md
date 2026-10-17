@@ -1,17 +1,17 @@
 # 安装、升级与回退
 
-当前功能版本0.3.0（M0–M8已验收）。M9提供Windows签名预验包，干净机器安装尚待用户验证；v1.0未发布。下载源码时不会包含dist制品，需要开发者构建或另行取得签名交付目录。
+当前功能版本0.3.1（M0–M8已验收）。M9提供Windows签名预验包，干净机器安装尚待用户验证；v1.0未发布。下载源码时不会包含dist制品，需要开发者构建或另行取得签名交付目录。
 
 ## 环境与交付目录
 
 CEP manifest声明Illustrator25.0–99.9、CEP11及以上；这是加载范围，实际功能目前仅在Windows Illustrator30.0.0/CEP12实测。macOS安装路径列在下文，但尚未实测；不要将Windows签名验收包作为已通过macOS兼容测试的制品。
 
-签名交付目录包含`logo-guides-0.3.0-win32.zxp`、六份`scripts/*.jsx`、使用说明、变更记录、`release.json`与`SHA256SUMS`。终端运行插件无需Node/npm；只有从源码构建和打包时需要Node20+与锁定开发依赖。
+签名交付目录包含`logo-guides-0.3.1-win32.zxp`、六份`scripts/*.jsx`、使用说明、变更记录、`release.json`与`SHA256SUMS`。终端运行插件无需Node/npm；只有从源码构建和打包时需要Node20+与锁定开发依赖。
 
 先核对ZXP的SHA256与交付记录一致，Windows示例：
 
 ```powershell
-Get-FileHash -LiteralPath '完整路径/logo-guides-0.3.0-win32.zxp' -Algorithm SHA256
+Get-FileHash -LiteralPath '完整路径/logo-guides-0.3.1-win32.zxp' -Algorithm SHA256
 ```
 
 签名是项目本地自签名证书，不代表Adobe认证或操作系统信任。`release.json`记录证书和工具hash、签名验证结果、文件清单、构建提交与时间戳情况；没有时间戳的包在证书到期后需重新签名，不承诺长期有效。证书信息中的撤销检查跳过，不代表在线吊销状态已验证。
@@ -23,7 +23,7 @@ Get-FileHash -LiteralPath '完整路径/logo-guides-0.3.0-win32.zxp' -Algorithm 
 3. 使用安装器选择ZXP安装；安装器可能请求系统权限。若选择ExManCmd，Windows命令为：
 
    ```powershell
-   & 'ExManCmd完整路径/ExManCmd.exe' --install 'ZXP完整路径/logo-guides-0.3.0-win32.zxp'
+   & 'ExManCmd完整路径/ExManCmd.exe' --install 'ZXP完整路径/logo-guides-0.3.1-win32.zxp'
    & 'ExManCmd完整路径/ExManCmd.exe' --list all
    ```
 

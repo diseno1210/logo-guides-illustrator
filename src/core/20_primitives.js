@@ -32,6 +32,7 @@ LG.primitives = (function () {
             if(s.features.ringThickness){U.each(model.rings,function(r){if(!ai(r)){return;}var inner=null;U.each(model.circles,function(c){if(c.id===r.innerId){inner=c;}});if(inner){out.push({type:"circle",c:[inner.cx,inner.cy],r:inner.r+r.measure.target*unit.value,style:"target",layer:"targets",featureId:r.id});}});}
         }
         if(s.features.clearSpace){var d=s.clearSpaceFactor*unit.value;var b=model.bbox;rectangle([b[0]-d,b[1]+d,b[2]+d,b[3]-d],"clearFrame","clearSpace","clearSpace");U.each([[b[0]-d,b[1]+d],[b[2],b[1]+d],[b[0]-d,b[3]],[b[2],b[3]]],function(p){rectangle([p[0],p[1],p[0]+d,p[1]-d],"clearSquare","clearSpace","clearSpace");var l=label([p[0]+d/2,p[1]-d/2],0,[{text:LG.ratios.display(s.clearSpaceFactor),sizeFactor:1,style:"text"}],"clearSpace");l.layer="clearSpace";out.push(l);});}
+        LG.layout.avoid(model,render);out=render.primitives;
         // A0 includes all non-legend labels, including optional corner labels.
         var area=render.guideArea;var labelBoxes=[];U.each(out,function(p){if(p.type==="label"){var box=LG.layout.labelBounds(p,fs);labelBoxes.push(box);area=U.union(area,[box[0]-fs,box[1]+fs,box[2]+fs,box[3]-fs]);}});
         var categories={};U.each(out,function(p){if(p.style==="baseline"||p.style==="dimension"){categories.baseline=true;}if(p.style==="visual"||p.style==="circleVisual"){categories.visual=true;}if(p.style==="target"){categories.target=true;}if(p.style==="devMarker"){categories.devMarker=true;}});if(model.constructionLines.length){categories.construction=true;}

@@ -1,0 +1,123 @@
+{
+  "version": "0.3.1",
+  "date": "2026-10-17T02:58:27.585Z",
+  "checks": [
+    {
+      "name": "isolated native BOATCHIN setup",
+      "status": "pass",
+      "detail": "ready"
+    },
+    {
+      "name": "CEP generate and all-family avoidance",
+      "status": "pass",
+      "detail": {
+        "labels": 42,
+        "collisions": 0,
+        "base": {
+          "value": 5.91301284293195,
+          "source": "auto-stem",
+          "locked": true
+        }
+      }
+    },
+    {
+      "name": "actual appearance UI events and persisted settings",
+      "status": "pass",
+      "detail": {
+        "font": 4.5,
+        "appearance": {
+          "textColor": "#112233",
+          "lineColor": "#445566",
+          "dashMode": "dashed",
+          "dashLength": 1.5,
+          "dashGap": 0.75
+        }
+      }
+    },
+    {
+      "name": "native text metrics, colors and physical stroke dashes",
+      "status": "pass",
+      "detail": {
+        "font": 4.5,
+        "text": [
+          17,
+          34,
+          51
+        ],
+        "line": [
+          68,
+          85,
+          102
+        ],
+        "dashes": [
+          1.5,
+          0.75
+        ],
+        "collisions": 0
+      }
+    },
+    {
+      "name": "tidy button is repeatable and retains source geometry and locked base",
+      "status": "pass",
+      "detail": {
+        "font": 4.2,
+        "base": 5.91301284293195,
+        "primitives": 95
+      }
+    },
+    {
+      "name": "native tidy artwork export",
+      "status": "pass",
+      "detail": "artwork.png"
+    }
+  ],
+  "status": "pass",
+  "runtime": {
+    "node": "17.7.2",
+    "v8": "9.9.115.10",
+    "uv": "1.43.0",
+    "zlib": "1.2.11",
+    "brotli": "1.0.9",
+    "ares": "1.18.1",
+    "modules": "102",
+    "nghttp2": "1.47.0",
+    "napi": "8",
+    "llhttp": "6.0.4",
+    "openssl": "3.0.2+quic",
+    "icu": "70.1",
+    "unicode": "14.0",
+    "cep": "12.0.0",
+    "chromium": "99.0.4844.84"
+  },
+  "regression": {
+    "status": "pass",
+    "checks": 14,
+    "parity": {
+      "primitives": 19,
+      "maxNumericError": 3.552713678800501e-13
+    },
+    "performance": {
+      "generate": {
+        "readMs": 219,
+        "readProfile": {
+          "sourcesMs": 3,
+          "geometryMs": 214
+        },
+        "computeMs": 141,
+        "drawMs": 112,
+        "totalMs": 639
+      },
+      "refresh": {
+        "readMs": 255,
+        "readProfile": {
+          "sourcesMs": 6,
+          "geometryMs": 248
+        },
+        "computeMs": 112.70000000111759,
+        "drawMs": 92,
+        "totalMs": 658.0999999996275
+      },
+      "primitives": 101
+    }
+  }
+}

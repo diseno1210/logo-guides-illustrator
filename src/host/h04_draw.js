@@ -57,7 +57,7 @@ LG.hostDraw = (function () {
     /** Render primitives and metadata; previous data selects Refresh semantics. Restore host state on error. */
     function generate(doc, result, settings, sources, previous) {
         var U = LG.util; var savedLayer = doc.activeLayer; var savedSelection = doc.selection; var root = LG.hostStore.layer(doc); var wasLocked = root ? root.locked : false;
-        var completed = false; var layers = {}; var used = {}; var styles = LG.styles.preset(settings.stylePreset); var i; var key; var primitive; var item; var data;var bg=null;var locks=LG.hostStore.layerLocks(doc);
+        var completed = false; var layers = {}; var used = {}; var styles = LG.styles.resolve(settings,result.render.strokeUnit); var i; var key; var primitive; var item; var data;var bg=null;var locks=LG.hostStore.layerLocks(doc);
         // Validate supported primitives and existing metadata before deleting old automatic output.
         LG.hostStore.read(doc);
         U.each(result.render.primitives, function (p) { if (U.indexOf(["line","label","polygon","circle","arc"],p.type)<0 || !U.has(names, p.layer)) { throw new Error("Unsupported primitive"); } var guide=p.layer!=="legend"&&(p.type==="line"||p.type==="circle"||p.type==="arc");if(!guide||settings.output!=="guides"){used[p.layer] = true;} if (guide && settings.output !== "styled") { used.snapGuides = true; } });
@@ -129,7 +129,7 @@ LG.hostManual = (function () {
             root.locked=false;
             for(i=0;i<root.layers.length;i+=1){if(root.layers[i].name==="LG Manual"){manual=root.layers[i];break;}}
             if(!manual){manual=root.layers.add();manual.name="LG Manual";}manualLocked=manual.locked;manual.locked=false;
-            var styles=LG.styles.preset(settings.stylePreset);
+            var styles=LG.styles.resolve(settings,unit);
             for(i=0;i<primitives.length;i+=1){var p=primitives[i];if(p.type==="label"){LG.hostDraw.label(manual,p,{fontSize:fs},styles,settings,doc);}else{var item=LG.hostDraw.shape(manual,p);item.name=p.featureId;LG.hostDraw.style(item,styles[p.style],unit,doc);}}
         }finally{try{if(manual){manual.locked=manualLocked;}}finally{try{root.locked=locked;}finally{try{doc.activeLayer=savedLayer;}finally{doc.selection=savedSelection;LG.util.each(pointSelections,function(p){if(p.selected!==undefined){p.point.selected=p.selected;}});}}}}
     }

@@ -87,7 +87,7 @@ LG.layout = (function () {
             var aiRadius=model.aiTargets&&model.aiTargets["$"+c.id];if(s.circleLabels||aiRadius){var radiusLines=aiRadius?LG.ratios.labelLines(c.measureR,cfg):[{text:c.measureR.display,sizeFactor:1,style:"text"}];radiusLines[0].text="R "+radiusLines[0].text;extras.push(LG.primitives.label([c.cx+(c.r+0.8*fs)/Math.sqrt(2),c.cy+(c.r+0.8*fs)/Math.sqrt(2)],0,radiusLines,c.id));}
             if(s.features.deviationMarkers&&Math.abs(c.maxErrSigned)>Math.max(cfg.devOk*c.r,0.1)){
                 var radial=V.unit(V.sub(c.maxErrPoint,[c.cx,c.cy]));var direction=V.scale(radial,c.maxErrSigned>0?-1:1);var N=[-direction[1],direction[0]];var tip=c.maxErrPoint;var back=V.sub(tip,V.scale(direction,0.6*fs*Math.sqrt(3)/2));
-                extras.push({type:"polygon",points:[tip,V.add(back,V.scale(N,0.3*fs)),V.sub(back,V.scale(N,0.3*fs))],closed:true,style:"devMarker",layer:"deviation",featureId:c.id});extras.push(LG.primitives.label(V.add(c.maxErrPoint,V.scale(radial,fs)),0,[{text:(c.maxErrSigned>=0?"+":"")+LG.ratios.number(c.maxErrSigned,2)+"pt",sizeFactor:0.75,style:"textWarn"}],c.id));
+                extras.push({type:"polygon",points:[tip,V.add(back,V.scale(N,0.3*fs)),V.sub(back,V.scale(N,0.3*fs))],closed:true,style:"devMarker",layer:"deviation",featureId:c.id});extras.push(LG.primitives.label(V.add(c.maxErrPoint,V.scale(radial,fs)),0,[{text:c.id+" "+(c.maxErrSigned>=0?"+":"")+LG.ratios.number(c.maxErrSigned,2)+"pt",sizeFactor:0.75,style:"textWarn"}],c.id));
             }
         });}
         U.each(model.angles||[],function(a){
@@ -101,5 +101,35 @@ LG.layout = (function () {
     }
     /** Resolve full-circle fallback only after every label and the legend set the final area. */
     function circleDisplay(model,render){var area=render.guideArea;var width=area[2]-area[0];var height=area[1]-area[3];var s=model.config.settings;LG.util.each(render.primitives,function(p){if(p.layer!=="circles"){return;}var c=null;LG.util.each(model.circles,function(item){if(item.id===p.featureId){c=item;}});if(!c){return;}var mode=s.circleDisplay;if(mode==="full"&&(c.cx-c.r<area[0]-width/2||c.cx+c.r>area[2]+width/2||c.cy+c.r>area[1]+height/2||c.cy-c.r<area[3]-height/2)){mode="extended";}if(mode!=="full"){var start=c.arcStartDeg-(mode==="extended"?s.circleExtendDeg:0);var end=c.arcEndDeg+(mode==="extended"?s.circleExtendDeg:0);if(end-start<360){p.type="arc";p.startDeg=start;p.endDeg=end;}}});}
-    return { references: references, labelBounds: labelBounds, run:run, circleDisplay:circleDisplay };
+    /** Resolve labels from all measurement families together, retaining feature IDs.
+     * Bounds deliberately include padding for native font-metric differences. */
+    function avoid(model,render){
+        if(!model.config.settings.avoidLabelOverlap){return;}
+        var U=LG.util;var fs=render.fontSize;var placed=[];var circles=[];var leaders=[];var pad=0.25*fs;
+        U.each(render.primitives,function(p){if(p.type==="circle"||p.type==="arc"){circles.push(p);}});
+        function intersects(a,b){return a[0]<b[2]+pad&&a[2]>b[0]-pad&&a[3]<b[1]+pad&&a[1]>b[3]-pad;}
+        function hits(box){var i;for(i=0;i<placed.length;i+=1){if(intersects(box,placed[i])){return true;}}return false;}
+        function curveHits(box){var n=0;var i;var c;var dx;var dy;var farX;var farY;for(i=0;i<circles.length;i+=1){c=circles[i];dx=Math.max(box[0]-c.c[0],0,c.c[0]-box[2]);dy=Math.max(box[3]-c.c[1],0,c.c[1]-box[1]);farX=Math.max(Math.abs(box[0]-c.c[0]),Math.abs(box[2]-c.c[0]));farY=Math.max(Math.abs(box[3]-c.c[1]),Math.abs(box[1]-c.c[1]));if(dx*dx+dy*dy<=(c.r+pad)*(c.r+pad)&&farX*farX+farY*farY>=(c.r-pad)*(c.r-pad)){n+=1;}}return n;}
+        U.each(render.primitives,function(p){
+            if(p.type!=="label"||p.layer!=="labels"){return;}
+            var original=p.pos.slice(0);var box=labelBounds(p,fs);var collision=hits(box);var score=curveHits(box);var best=collision?null:original;var bestScore=collision?Infinity:score;var i;var radius;var angle;var next;var b;
+            if(collision||score){
+                // Bounded local search avoids nearby circular guides without moving
+                // already clear labels or discarding distinct reported deviations.
+                for(i=0;i<48;i+=1){radius=(1+Math.floor(i/8))*1.5*fs;angle=(i%8)*Math.PI/4;next=[original[0]+radius*Math.cos(angle),original[1]+radius*Math.sin(angle)];p.pos=next;b=labelBounds(p,fs);if(hits(b)){continue;}var candidate=curveHits(b)+0.02*radius/fs;if(candidate<bestScore){best=next;bestScore=candidate;}if(candidate<1){break;}}
+                // If all local lanes are full, put a callout outside the logo.
+                // Search is finite and deterministic; do not silently drop a value.
+                if(!best){for(i=0;i<=placed.length;i+=1){p.pos=[render.guideArea[2]+4*fs,model.bbox[1]+(i+2)*2*fs];b=labelBounds(p,fs);if(!hits(b)){best=p.pos.slice(0);break;}}}
+                p.pos=best||original;
+                if(!best){U.warn(model.warnings,"LABEL_AVOIDANCE_LIMIT","Could not find a clear label position; reduce the font size or hide diagnostic features.");}
+                if(Math.abs(p.pos[0]-original[0])+Math.abs(p.pos[1]-original[1])>model.config.EPS){
+                    b=labelBounds(p,fs);var dx=original[0]-p.pos[0];var dy=original[1]-p.pos[1];var w=(b[2]-b[0])/2+0.1*fs;var h=(b[1]-b[3])/2+0.1*fs;var scale=1/Math.max(Math.abs(dx)/w,Math.abs(dy)/h);
+                    leaders.push({type:"line",p0:original,p1:[p.pos[0]+dx*scale,p.pos[1]+dy*scale],style:"measureBar",layer:"dimensions",featureId:p.featureId});
+                }
+            }
+            placed.push(labelBounds(p,fs));
+        });
+        render.primitives=render.primitives.concat(leaders);
+    }
+    return { references: references, labelBounds: labelBounds, run:run, circleDisplay:circleDisplay, avoid:avoid };
 }());

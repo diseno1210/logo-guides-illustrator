@@ -26,5 +26,15 @@ LG.styles = (function () {
         } else if (name !== "dark") { throw new Error("Unknown style preset"); }
         return styles;
     }
-    return { preset: preset };
+    /** User-requested appearance override; dashes are entered in physical pt. */
+    function resolve(settings,unit){
+        var styles=preset(settings.stylePreset);var a=settings.appearance;var key;
+        if(!a){return styles;}
+        for(key in styles){if(LG.util.has(styles,key)){
+            var item=styles[key];
+            if(item.stroke){if(a.lineColor){item.stroke=a.lineColor;}if(a.dashMode==="solid"){item.dashes=[];}else if(a.dashMode==="dashed"){item.dashes=[a.dashLength/unit,a.dashGap/unit];}}
+            if((key==="text"||key==="textWarn"||key==="textBad")&&a.textColor){item.fillHex=a.textColor;}
+        }}return styles;
+    }
+    return { preset: preset, resolve:resolve };
 }());

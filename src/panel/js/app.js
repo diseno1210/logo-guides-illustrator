@@ -19,6 +19,7 @@
   function makeCheck(parent, id, text, fn) { const label=document.createElement('label');label.className='check';const input=document.createElement('input');input.type='checkbox';input.id=id;input.addEventListener('change',()=>fn(input.checked));label.append(input,document.createTextNode(text));$(parent).appendChild(label); }
   fields.forEach(function (f) { const label=document.createElement('label');label.textContent=f[1];const select=document.createElement('select');select.id='setting-'+f[0];f[2].forEach((v,i)=>{const option=document.createElement('option');option.value=String(v);option.textContent=(f[3]||f[2])[i];select.appendChild(option);});select.addEventListener('change',function(){controller.state.settings[f[0]]=typeof f[2][0]==='number'?Number(select.value):select.value;if(f[0]==='tolerancePreset'){delete controller.state.settings.advanced.circleFitTol;sync(controller.state);}schedule();});label.appendChild(select);$('parameters').appendChild(label); });
   checks.forEach(f=>makeCheck('checks','setting-'+f[0],f[1],v=>{controller.state.settings[f[0]]=v;schedule();}));
+  [['avoidLabelOverlap','标注自动避让'],['labelDedup','同值尺寸去重'],['circleLabels','显示半径标签']].forEach(f=>makeCheck('labelChecks','setting-'+f[0],f[1],v=>{controller.state.settings[f[0]]=v;schedule();}));
   features.forEach(f=>makeCheck('features','feature-'+f[0],f[1],v=>{controller.state.settings.features[f[0]]=v;schedule();}));
   function button(parent,text,fn) { const b=document.createElement('button');b.textContent=text;b.disabled=controller.state.busy;b.addEventListener('click',()=>action(fn));$(parent).appendChild(b); }
   function sync(s) {
@@ -26,6 +27,13 @@
     fields.forEach(f=>$('setting-'+f[0]).value=String(s.settings[f[0]]));
     checks.forEach(f=>$('setting-'+f[0]).checked=s.settings[f[0]]);
     features.forEach(f=>$('feature-'+f[0]).checked=s.settings.features[f[0]]);
+    const appearance=s.settings.appearance || LG.config.defaults().appearance;
+    $('labelFontSize').value=s.settings.fontSize;$('circleDisplay').value=s.settings.circleDisplay;
+    ['avoidLabelOverlap','labelDedup','circleLabels'].forEach(key=>$('setting-'+key).checked=s.settings[key]);
+    const style=LG.styles.preset(s.settings.stylePreset);
+    $('useTextColor').checked=!!appearance.textColor;$('useLineColor').checked=!!appearance.lineColor;
+    $('textColor').value=appearance.textColor||style.text.fillHex;$('lineColor').value=appearance.lineColor||style.baseline.stroke;
+    ['dashMode','dashLength','dashGap'].forEach(key=>$(key).value=appearance[key]);
     if(!baseEditing)$('baseValue').value=s.settings.baseUnit.value||s.docData&&s.docData.baseUnit.value||'';
     $('baseLock').checked=s.settings.baseUnit.locked;
     const cfg=LG.config.resolve(s.settings);$('circleFit').value=cfg.circleFitTol;$('fitValue').textContent=(100*cfg.circleFitTol).toFixed(2)+'%';
@@ -64,6 +72,13 @@
     $('baseLock').onchange=()=>action(()=>controller.base(Number($('baseValue').value)||null,$('baseLock').checked));
     $('autoBase').onclick=()=>action(()=>controller.base(null,$('baseLock').checked));
     $('circleFit').oninput=function(){controller.state.settings.advanced.circleFitTol=Number(this.value);$('fitValue').textContent=(100*Number(this.value)).toFixed(2)+'%';schedule();};
+    function editAppearance(edit){const next=LG.util.clone(controller.state.settings);edit(next);try{controller.state.settings=LG.config.resolve(next).settings;sync(controller.state);schedule();}catch(error){report(error);}}
+    $('labelFontSize').onchange=function(){editAppearance(s=>{s.fontSize=Number(this.value);});};
+    $('circleDisplay').onchange=function(){editAppearance(s=>{s.circleDisplay=this.value;});};
+    ['textColor','lineColor'].forEach(key=>{const toggle=key==='textColor'?'useTextColor':'useLineColor';$(key).onchange=function(){editAppearance(s=>{s.appearance[key]=this.value;});};$(toggle).onchange=function(){editAppearance(s=>{s.appearance[key]=this.checked?$(key).value:'';});};});
+    ['dashMode','dashLength','dashGap'].forEach(key=>{$(key).onchange=function(){editAppearance(s=>{s.appearance[key]=key==='dashMode'?this.value:Number(this.value);});};});
+    $('tidyPresentation').onclick=()=>{controller.state.curated=true;editAppearance(s=>{const automatic=controller.state.result?LG.config.derive(LG.config.resolve({fontSize:0}),controller.state.result.analysis.S,controller.state.result.analysis.D).fs:6;s.fontSize=Math.max(3,Math.round(automatic*0.65*10)/10);s.stylePreset='light';s.circleDisplay='extended';s.labelDedup=true;s.avoidLabelOverlap=true;s.circleLabels=false;s.features.angles=false;s.features.constructionLines=false;s.features.deviationMarkers=false;});};
+    $('resetAppearance').onclick=()=>editAppearance(s=>{s.appearance=LG.config.defaults().appearance;s.fontSize=0;s.circleDisplay='full';s.circleLabels=false;s.labelDedup=false;s.avoidLabelOverlap=true;});
     $('curated').onchange=function(){controller.state.curated=this.checked;schedule();};
     $('view').onchange=()=>renderList(controller.state);
     $('aiGoal').onchange=()=>sync(controller.state);
