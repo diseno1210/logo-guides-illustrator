@@ -12,10 +12,11 @@ async function run(folder,baseline=false){
  const profile=fs.mkdtempSync(path.join(os.tmpdir(),'lg-layout-'));
  const chrome=process.env.LG_CHROME || 'C:/Program Files/Google/Chrome/Application/chrome.exe';
  const child=spawn(chrome,['--headless=new','--disable-gpu','--no-first-run','--no-default-browser-check','--allow-file-access-from-files','--remote-debugging-port=0','--user-data-dir='+profile,'about:blank'],{stdio:'ignore',windowsHide:true});
+ let spawnError;child.once('error',error=>{spawnError=error;});
  let socket;const report={baseline,checks:[],layouts:[]};
  try{
   const portFile=path.join(profile,'DevToolsActivePort');let start=Date.now();
-  while(!fs.existsSync(portFile)){if(Date.now()-start>15000)throw Error('Headless browser did not start');await delay(100);}
+  while(!fs.existsSync(portFile)){if(spawnError)throw spawnError;if(Date.now()-start>15000)throw Error('Headless browser did not start');await delay(100);}
   const port=fs.readFileSync(portFile,'utf8').split('\n')[0];
   const pages=await(await fetch('http://127.0.0.1:'+port+'/json')).json();
   socket=new WebSocket(pages.find(p=>p.type==='page').webSocketDebuggerUrl);
@@ -40,13 +41,36 @@ async function run(folder,baseline=false){
     if(!baseline){check(width+'x'+height+' '+tab+' width',metrics.scrollWidth===metrics.bodyWidth&&metrics.outside.length===0);check('font >=11',metrics.minFont>=11);if(width>=320)check('fixed <=90',metrics.fixedHeight<=90);if(height===780)check('no outer scroll',metrics.overflow<=1);if(height===420&&tab==='parameters')check('short parameter overflow <=120',metrics.overflow<=120);if(height===420&&tab==='features')check('six feature rows',metrics.featureHeight>=120);if(width===400&&height===780&&tab==='ai')check('AI action near top',metrics.requestTop<=60);if(tab==='appearance')check('font action near top',metrics.labelTop<=40);}
    }
   }
+  if(!baseline){
+   await send('Emulation.setDeviceMetricsOverride',{width:320,height:780,deviceScaleFactor:1,mobile:false});
+   check('keyboard navigation in non-CEP browser',await evaluate(`(()=>{const ai=document.getElementById('tab-ai');ai.click();ai.dispatchEvent(new KeyboardEvent('keydown',{key:'Home',bubbles:true}));return document.getElementById('tab-parameters').getAttribute('aria-selected')==='true'&&document.activeElement.id==='tab-parameters';})()`));
+   check('two candidate rows fit parameter page',await evaluate(`(()=>{const box=document.getElementById('candidates');for(let i=0;i<4;i++){const b=document.createElement('button');b.style.width='120px';b.textContent='20.000 pt · 6 处';box.appendChild(b);}const p=document.getElementById('page-parameters');return box.clientHeight===40&&p.scrollHeight===p.clientHeight;})()`));
+   for(const width of [320,400]){
+    await send('Emulation.setDeviceMetricsOverride',{width,height:420,deviceScaleFactor:1,mobile:false});
+    check('long feature list scrolls locally '+width,await evaluate(`(()=>{document.getElementById('tab-features').click();const list=document.getElementById('featureList');list.textContent='';for(let i=0;i<100;i++){const row=document.createElement('div');row.className='feature';row.textContent='笔画 S'+i+' · 1.00a';list.appendChild(row);}const p=document.getElementById('page-features');return list.clientHeight>=120&&list.scrollHeight>list.clientHeight&&p.scrollHeight===p.clientHeight;})()`));
+    check('long AI advice scrolls locally '+width,await evaluate(`(()=>{document.getElementById('tab-ai').click();document.getElementById('labelModeHint').textContent='当前：目标对照；主行是目标（没有目标时为实际值），◇ 行是实际值与偏差。';const text=document.getElementById('aiAdvice');text.textContent=Array(100).fill('仅文本建议 <b>内容</b>').join('\\n');const p=document.getElementById('page-ai');return text.clientHeight>=64&&text.scrollHeight>text.clientHeight&&p.scrollHeight===p.clientHeight&&!text.querySelector('b');})()`));
+    check('expanded summary does not add an outer scrollbar '+width,await evaluate(`(()=>{const text=document.getElementById('aiSummary');text.textContent=Array(100).fill('numeric summary').join('\\n');text.parentElement.open=true;const p=document.getElementById('page-ai');const fits=p.scrollHeight===p.clientHeight;text.parentElement.open=false;return fits;})()`));
+    check('expanded connection fields fit panel width '+width,await evaluate(`(()=>{const settings=document.getElementById('aiSettings');settings.open=true;const p=document.getElementById('page-ai');const fits=p.scrollWidth===p.clientWidth&&document.getElementById('aiKey').type==='password';settings.open=false;return fits;})()`));
+   }
+   check('warning area is bounded and wraps long identifiers',await evaluate(`(()=>{const w=document.getElementById('warnings');w.textContent=Array(10).fill('LABEL_LANES_FULL: '+ 'x'.repeat(100)).join('\\n');return w.getBoundingClientRect().height<=51&&w.scrollHeight>w.clientHeight&&document.documentElement.scrollWidth===innerWidth;})()`));
+   const contrast=await evaluate(`(()=>{function lum(hex){const c=hex.match(/\\w\\w/g).map(v=>parseInt(v,16)/255).map(v=>v<=.04045?v/12.92:Math.pow((v+.055)/1.055,2.4));return c[0]*.2126+c[1]*.7152+c[2]*.0722;}const css=getComputedStyle(document.documentElement),bg=lum(css.getPropertyValue('--bg').trim().slice(1));return Object.fromEntries(['ink','muted','primary','focus','ok','warn','bad'].map(key=>{const color=lum(css.getPropertyValue('--'+key).trim().slice(1));const other=key==='primary'?1:bg;return [key,(Math.max(color,other)+.05)/(Math.min(color,other)+.05)];}));})()`);
+   report.contrast=contrast;check('text and focus contrast',Object.entries(contrast).every(([key,value])=>value>=(key==='focus'?3:4.5)));
+  }
   const {LG,plain}=loadCore();const geometry={};for(const [name,fixture] of Object.entries(fixtures).filter(([n])=>/^F\d+b?$/.test(n)))geometry[name]=plain(LG.analyze(fixture(),{}));
   fs.writeFileSync(path.join(folder,'geometry-render.json'),JSON.stringify(geometry));
   if(!baseline){const before=path.resolve(__dirname,'../dist/dark-compact/baseline/layout/geometry-render.json');assert.deepEqual(geometry,JSON.parse(fs.readFileSync(before,'utf8')));check('F1-F10 geometry and render unchanged',true);}
   report.status='pass';
  }catch(error){report.status='fail';report.error=error.message;}
- finally{if(socket)socket.close();child.kill();fs.writeFileSync(path.join(folder,'results.json'),JSON.stringify(report,null,2)+'\n');}
+ finally{
+  if(socket)socket.close();
+  if(child.exitCode===null){const stopped=new Promise(resolve=>child.once('exit',resolve));child.kill();await Promise.race([stopped,delay(1000)]);}
+  // Delete only the exact temporary profile created above, inside the OS temp directory.
+  if(path.dirname(path.resolve(profile))===path.resolve(os.tmpdir())&&path.basename(profile).startsWith('lg-layout-')){
+   try{fs.rmSync(profile,{recursive:true,force:true,maxRetries:5,retryDelay:200});}catch(error){report.profileCleanupError=error.message;}
+  }
+  fs.writeFileSync(path.join(folder,'results.json'),JSON.stringify(report,null,2)+'\n');
+ }
  return report;
 }
-if(require.main===module)run(process.argv[2],process.argv.includes('--baseline')).then(r=>{console.log(JSON.stringify(r,null,2));if(r.status!=='pass')process.exitCode=1;});
+if(require.main===module)run(process.argv[2],process.argv.includes('--baseline')).then(r=>{console.log(JSON.stringify({status:r.status,error:r.error,checks:r.checks.length,layouts:r.layouts.map(({width,height,tab,overflow,fixedHeight})=>({width,height,tab,overflow,fixedHeight})),contrast:r.contrast},null,2));if(r.status!=='pass')process.exitCode=1;}).catch(error=>{console.error(error.message);process.exitCode=1;});
 module.exports={run};
