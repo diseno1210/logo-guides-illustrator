@@ -12,7 +12,7 @@
 | M5 | 已验收 | `bb4e849`；136项测试/Chrome通过，F4角度/F3目标线/图例通过 |
 | M6 | 已验收 | `6da8b2a`实现、`c4784b0`原生修复；154项测试、6份ASCII/ES3脚本、18项原生DOM、真实窗口/撤销与用户拖动均通过；v0.1.0 |
 | M7 | 已验收 | v0.2.0；171项测试、9份ES3产物通过；真实CEP F10刷新1092ms/101图元，F9原生图元误差≤3.56e-13；14项CEP检查通过，证据见acceptance/M7.md |
-| M8 | 未开始 | 依赖 M7 与真实 AI 调用 |
+| M8 | 自动验证通过，待真实 AI 调用 | 186项测试、9份ES3通过；6项真实CEP检查通过（仅远端响应模拟），详见acceptance/M8.md。仍为v0.2.0，不提前验收或进入M9 |
 | M9 | 未开始 | 依赖 M8 与干净机器安装验证 |
 
 ## 原始输入
@@ -152,3 +152,12 @@ M0–M7已满足各自门槛。当前交付v0.2.0，M8 AI和M9签名安装尚未
 - 旧M7-native中的758ms是纯ExtendScript探针，598ms计时包含read，不能称为V8；旧测试只检查matched，未验证selected。已纠正并保留历史记录。
 - 原始结果/实际CEP截图：dist/native-acceptance/m7-cep-final/；入库摘要：[M7-cep.json](acceptance/evidence/M7-cep.json)。独立测试文档已关闭，测试前的全局设置与dump已恢复。
 - 命令：node tools/run_tests.js；node tools/build.js；node tools/check_es3.js；node tools/cep_acceptance.js dist/native-acceptance/m7-cep-final。
+
+## M8 实现与验证（2026-10-17，真实AI待验证）
+
+- 已按第12节实现OpenAI兼容及Anthropic设置、数值摘要、Node HTTPS调用、60秒绝对超时、严格JSON/单次重试、响应校验、暂存/应用及精选回退；仅本机保存连接配置，无新增依赖。
+- 目标在同一ES3核心的ratios→layout→primitives流程生效，覆盖尺寸、圆、环、轴角/夹角；Geometry/Settings/Doc Data及analyze返回契约不变。groups/notes纯文本，目标/说明不持久化到文档。
+- 186/186自动测试通过、9份ES3构建通过。M8新增15项测试，覆盖两种协议、传输失败/超时、中断/响应上限、严格重试、非法id/越界target、隐私、全类别目标图元及未改来源、精选省略项可见性、busy/文档/几何/a/参数变化保护。
+- 真实Illustrator30/CEP12中6项M8检查通过，只有远端响应模拟：首次非JSON→重试成功，过滤非法项；F9应用后22图元含1个原生目标圆，隐藏1特征对应2个对象；原生读取来源Geometry不变；刷新清除目标，双非JSON回退，编辑来源/切换文档拒绝旧建议。独立测试文件已关闭，全局设置与原活动文档恢复。
+- 命令：node tools/run_tests.js；node tools/build.js；node tools/check_es3.js；node tools/cep_ai_acceptance.js dist/native-acceptance/m8-cep-final。结果见[验收页](acceptance/M8.md)及[M8-cep.json](acceptance/evidence/M8-cep.json)，实际CEP截图已查看。
+- 用户选择OpenAI兼容接口，等待在本机面板保存baseUrl、模型及key后执行一次真实调用。当前没有真实服务成功证据，不标M8已验收、不发布v0.3、不进入M9。DEV_PLAN SHA256仍为F467FBB3475BB97A34B1732E4E7569975CE43F89561180D7B3EF4CAE3982E75D。

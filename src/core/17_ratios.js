@@ -21,5 +21,13 @@ LG.ratios=(function(){
     function angle(value,cfg){var s=cfg.settings;var target=s.angleSnapStep>0?Math.round(value/s.angleSnapStep)*s.angleSnapStep:null;var dev=target===null?null:value-target;return {value:value,ratio:null,display:compact(Math.round(value/s.angleLabelPrecision)*s.angleLabelPrecision)+"°",target:target,targetDisplay:target===null?null:compact(target)+"°",special:null,dev:dev,devAbs:dev,severity:dev===null?"none":severity(dev,cfg.angleDevOk,cfg.angleDevWarn)};}
     /** Assign all currently implemented measurements in place. */
     function run(model,unit){U.each([model.stems,model.gaps,model.heights,model.counters,model.rings||[]],function(list){U.each(list,function(item){item.measure=measure(item.width!==undefined?item.width:(item.thickness!==undefined?item.thickness:item.y2-item.y1),unit.value,model.config);});});U.each(model.circles||[],function(c){c.measureR=measure(c.r,unit.value,model.config);});U.each(model.angles||[],function(a){a.measure=angle(a.value,model.config);});}
-    return {measure:measure,angle:angle,labelLines:labelLines,run:run,number:number,display:display};
+    /** Session-only AI targets are revalidated here, before layout, without changing geometry. */
+    function overrides(model,unit,targets){
+        model.aiTargets={};var known={};U.each([model.stems,model.gaps,model.heights,model.counters,model.rings||[],model.circles||[],model.angles||[]],function(items){U.each(items,function(f){known["$"+f.id]=f;});});
+        U.each(targets||[],function(t){if(!t||!U.finite(t.target)||U.has(model.aiTargets,"$"+t.id)){return;}var f=known["$"+t.id];if(!f){return;}var m=f.measureR||f.measure;var angular=m.ratio===null;var actual=angular?m.value:m.ratio;var target=t.target;
+            if(angular?Math.abs(target-actual)>5+1e-9:!(target>0&&actual>0&&Math.abs(target-actual)/actual<=0.15+1e-12)){return;}
+            m.target=target;m.targetDisplay=angular?compact(target)+"°":display(target);m.special=null;m.dev=angular?actual-target:(actual-target)/target;m.devAbs=angular?m.dev:m.value-target*unit.value;m.severity=angular?severity(m.dev,model.config.angleDevOk,model.config.angleDevWarn):severity(m.dev,model.config.devOk,model.config.devWarn);model.aiTargets["$"+f.id]=true;
+        });
+    }
+    return {measure:measure,angle:angle,labelLines:labelLines,run:run,overrides:overrides,number:number,display:display};
 }());

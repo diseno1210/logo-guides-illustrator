@@ -55,7 +55,7 @@ function buildPanel(output = path.join(ROOT, 'dist', 'panel')) {
     const diagnostics = checkSource(source, name);
     if (diagnostics.length) throw new Error(JSON.stringify(diagnostics, null, 2));
   }
-  const files = ['index.html', 'css/panel.css', 'js/model.js', 'js/controller.js', 'js/app.js', 'CSXS/manifest.xml', 'vendor/CSInterface.js', 'vendor/Adobe-SDK-License.pdf'];
+  const files = ['index.html', 'css/panel.css', 'js/model.js', 'js/ai.js', 'js/controller.js', 'js/app.js', 'CSXS/manifest.xml', 'vendor/CSInterface.js', 'vendor/Adobe-SDK-License.pdf'];
   for (const name of files) {
     const target = path.join(output, name);
     fs.mkdirSync(path.dirname(target), { recursive: true });

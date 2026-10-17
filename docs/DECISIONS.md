@@ -131,3 +131,21 @@ Illustrator会在锁定祖先图层时立即取消选中。点击特征时暂时
 原文没有给出精选排序公式：线按边界100、视觉50、支持部件数×10、平段长度/S累加；构造线按edgeCount，与线共享数量上限。圆用既有score；角度优先pair（100000）再edgeLength；同分按id字典序。笔画/间距及其他未限制类别全保留。筛选现有真实图元，标签保持既有布局，不另行改写布局算法。
 
 用户要求每个大阶段完成后推送GitHub并同步Notion工作日志。固定使用README与DEVELOPMENT_WORKFLOW中的日志页；记录阶段状态、提交链接、验证命令、真实结果、限制和下一步。原始Notion规范正文不修改；GitHub推送成功后才记录为已同步。
+
+## D024 — AI配置、摘要和传输（2026-10-17）
+
+第12节未规定连接配置文件名、默认模型或summary所有类别的细项。使用本机用户目录LogoGuides/ai.json，与第7节Settings独立；提供商默认OpenAI兼容，baseUrl/model/key由用户填写，不读取其他应用凭证。只允许HTTPS且URL不含userinfo、query或hash，不跟随重定向；60秒为每次请求的绝对期限，响应上限1MiB，错误不包含响应正文或密钥。配置读取损坏时报告路径，保存由用户显式触发。没有新依赖。
+
+摘要逐项白名单：a、S、行数、goal；尺寸倍率/已有目标/偏差百分比，角度deg，圆rRatio/coverageDeg/fitErrPct/category，线方向/类别/支持数，构造线edgeCount。fitErrPct采用既有最大几何误差maxErr/r×100；不发送坐标、部件名称、Geometry或图像。两种提供商使用第12.7节指定协议，OpenAI请求按实施计划所链接官方文档核对。
+
+## D025 — AI响应歧义（2026-10-17）
+
+严格JSON对象必须包含show/hide/targets/groups数组及notes字符串，否则回退；非JSON解析失败仅重试一次，网络/HTTP/结构错误不额外重试。未知顶层字段忽略，未知id丢弃；重复id去重，target取第一个合法值，show/hide冲突时hide优先，未列出的id保持现有可见性。空的合法建议可应用。尺寸目标以实测倍率为基准计算15%，角度差为绝对度数；两处均含浮点边界余量，核心再次验证。reason/title截取2000字符、notes20000字符，全部通过textContent显示，不解释HTML或执行文字指令。
+
+## D026 — AI目标图元与会话（2026-10-17）
+
+第12.6节要求所有建议目标产生标签、偏差与目标线，但第8.12节只定义笔画、间距和轴角。AI使用preAnalyze上下文中的会话targetOverrides，在ratios之后、layout之前覆盖既有measure字段；不增加Settings、Doc Data或analysis输出字段，不更改Geometry。只有上下文可重用时接受覆盖，防止旧几何id误用。
+
+笔画沿原中心对称调整，间距保持左边界，轴角沿既有参考射线；字怀沿原中心对称调整，高度固定y1、在y1+target×a画横线，圆保持圆心、画目标半径圆，环固定内圆、画inner.r+target×a的同心目标圆，夹角保持ray1、在ray1+target方向画目标射线。AI指定目标时即生成相应图元，仍尊重对应类别及targetLines开关；圆目标强制显示半径标签以满足第12.6节，使用同一labelLines格式。
+
+请求先暂存，点击应用后才重画辅助图元。应用重新读取同一文档来源，复核文档token、runId、a、参数及Geometry快照；变化即拒绝，网络失败前也复核文档，防止回退作用于其他文件。AI应用退出精选以覆盖完整特征集，原精选省略项转成隐藏状态，只有显式show才恢复，保证未列出项保持原可见性；隐藏状态写原hiddenFeatures，目标/groups/notes仅当前会话，生成/刷新/清除/换文档时清除。P2预览图与说明插入Labels不实施。

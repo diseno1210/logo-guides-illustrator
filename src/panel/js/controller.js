@@ -20,9 +20,11 @@
       });
     };
   }
-  function create(LG, call, changed, clock) {
+  function create(LG, call, changed, clock, ai) {
     clock = clock || function () { return performance.now(); };
-    const state = {settings:LG.config.defaults(), documentToken:null, docData:null, features:[], hidden:[], candidates:[], measurements:[], busy:false, curated:false, result:null, geometry:null, status:'就绪'};
+    const state = {settings:LG.config.defaults(), documentToken:null, docData:null, features:[], hidden:[], candidates:[], measurements:[], busy:false, curated:false, result:null, geometry:null, ai:{pending:null,notes:'',groups:[],summary:null}, status:'就绪'};
+    let session=null;
+    function resetAI() {state.ai={pending:null,notes:'',groups:[],summary:null};session=null;}
     function emit() { if (changed) changed(state); }
     async function task(fn) {
       if (state.busy) throw new Error('正在处理，请稍候');
@@ -41,7 +43,7 @@
     async function init() {
       return task(async function () {
         const data = await call('getDocData');
-        if (state.documentToken !== data.documentToken) { state.features=[]; state.hidden=[]; state.candidates=[]; state.measurements=[]; state.result=null; state.geometry=null; }
+        if (state.documentToken !== data.documentToken) { state.features=[]; state.hidden=[]; state.candidates=[]; state.measurements=[]; state.result=null; state.geometry=null; resetAI(); }
         state.settings = data.settings; state.docData = data.docData; state.documentToken = data.documentToken;
         if (data.docData && data.docData.baseUnit.locked) state.settings.baseUnit = {mode:'value',value:data.docData.baseUnit.value,locked:true};
         state.status = data.documentName; return data;
@@ -67,6 +69,7 @@
         state.timing = {readMs:input.readMs,readProfile:input.readProfile,computeMs:computeMs,drawMs:output.drawMs,totalMs:clock()-start};
         state.status = '完成 · ' + output.primitives + ' 图元 · a=' + result.analysis.baseUnit.value + ' pt · ' + Math.round(state.timing.totalMs) + ' ms';
         state.warnings = result.analysis.warnings;
+        resetAI();session={geometry:JSON.stringify(input.geometry),settings:JSON.stringify(settings),runId:output.docData && output.docData.runId,baseUnit:JSON.stringify(output.docData && output.docData.baseUnit),fullResult:result};
         return {result:projected.result, output:output, timing:state.timing};
     }
     async function run(mode) { return task(() => runImpl(mode)); }
@@ -105,6 +108,7 @@
       return task(async function () {
         await call('clear',mode,state.documentToken);
         state.features=[]; state.hidden=[]; state.result=null;
+        resetAI();
         if (mode === 'data') state.docData=null;
         state.status='已清除';
       });
@@ -115,7 +119,55 @@
         return JSON.stringify(input.geometry,null,2);
       });
     }
-    return {state:state,init:init,run:run,measure:measure,base:base,visible:visible,select:select,clear:clear,dump:dump};
+    async function sameSession(captured) {
+      const current=await call('getDocData');
+      if(current.documentToken!==state.documentToken)throw new Error('文档已切换，请重新连接');
+      if(!captured || session!==captured || !current.docData || current.docData.runId!==captured.runId || JSON.stringify(current.docData.baseUnit)!==captured.baseUnit || JSON.stringify(state.settings)!==captured.settings)throw new Error('分析或参数已改变，请刷新后重新请求 AI');
+    }
+    async function requestAI(config,goal) {
+      return task(async function(){
+        if(!ai || !session || !state.result)throw new Error('请先生成或刷新辅助线');
+        const captured=session;await sameSession(captured);
+        state.ai.pending=null;state.ai.notes='';state.ai.groups=[];
+        const input=ai.summary(captured.fullResult.analysis,goal);state.ai.summary=input;
+        state.status='正在请求 AI 建议…';emit();
+        let suggestion;
+        try {suggestion=await ai.suggest(config,input);}
+        catch(error){
+          await sameSession(captured);state.curated=true;
+          await runImpl('sources');state.ai.summary=input;
+          state.status='AI 不可用，已回退精选模式 · '+error.message;
+          return {fallback:true};
+        }
+        await sameSession(captured);
+        // Validate again even for injected transports; untrusted output never reaches core unchecked.
+        state.ai.pending=ai.validate(suggestion,input);state.ai.notes=state.ai.pending.notes;state.ai.groups=state.ai.pending.groups;
+        state.status='AI 建议已校验 · '+state.ai.pending.targets.length+' 个目标 · 点击应用后生效';
+        return state.ai.pending;
+      });
+    }
+    async function applyAI() {
+      return task(async function(){
+        const captured=session;const suggestion=state.ai.pending;
+        if(!suggestion)throw new Error('没有待应用的 AI 建议');
+        await sameSession(captured);
+        const input=await call('read',{mode:'sources',settings:state.settings,documentToken:state.documentToken});
+        if(input.documentToken!==state.documentToken || JSON.stringify(input.geometry)!==captured.geometry || !input.docData || input.docData.runId!==captured.runId || JSON.stringify(input.docData.baseUnit)!==captured.baseUnit){state.ai.pending=null;throw new Error('来源几何或基准单位已改变，请刷新后重新请求 AI');}
+        const context=LG.preAnalyze(input.geometry,state.settings);context.targetOverrides=suggestion.targets;
+        const result=LG.analyze(input.geometry,state.settings,context);
+        const features=LG.panelModel.catalog(result.analysis);const hidden=new Set(LG.panelModel.match(input.docData.hiddenFeatures || [],features,state.settings,result.analysis.S).map(f=>f.id));
+        if(state.curated){const displayed=new Set(state.features.map(f=>f.id));features.forEach(f=>{if(!displayed.has(f.id))hidden.add(f.id);});}
+        suggestion.show.forEach(id=>hidden.delete(id));suggestion.hide.forEach(id=>hidden.add(id));
+        const descriptors=features.filter(f=>hidden.has(f.id)).map(LG.panelModel.descriptor);
+        // Materialize the complete catalog; omitted curated features stay hidden unless explicitly shown.
+        const projected=LG.panelModel.project(result,state.settings,descriptors,false);
+        const output=await call('draw',{mode:'sources',readToken:input.readToken,settings:state.settings,result:projected.result,hiddenFeatures:descriptors});
+        state.result=projected.result;state.features=features;state.hidden=descriptors;state.docData=output.docData;state.curated=false;
+        session.fullResult=result;state.ai.pending=null;state.status='AI 建议已应用 · '+output.primitives+' 图元';
+        return {result:projected.result,output};
+      });
+    }
+    return {state:state,init:init,run:run,measure:measure,base:base,visible:visible,select:select,clear:clear,dump:dump,requestAI:requestAI,applyAI:applyAI};
   }
   root.LGPanel = {bridge:bridge,create:create};
 }(this));

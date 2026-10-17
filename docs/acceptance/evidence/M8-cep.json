@@ -1,0 +1,79 @@
+{
+  "date": "2026-10-17T01:51:07.602Z",
+  "mode": "mock-response-real-CEP",
+  "checks": [
+    {
+      "name": "real UI requests, retries strict JSON, filters unknown ids and unsafe targets",
+      "status": "pass",
+      "detail": {
+        "requests": 2,
+        "targets": 1,
+        "advice": "显示：C2\n隐藏：L1\nC2 → 2.704378578876747 · 半径建议\n圆组：C2\n<b>仅文本说明</b>"
+      }
+    },
+    {
+      "name": "real apply button and native target drawing preserve source geometry",
+      "status": "pass",
+      "detail": {
+        "primitives": 22,
+        "targetPrimitives": 1,
+        "hidden": 1,
+        "status": "AI 建议已应用 · 22 图元",
+        "native": {
+          "targets": 1,
+          "hidden": 2
+        }
+      }
+    },
+    {
+      "name": "real refresh removes session target overrides",
+      "status": "pass",
+      "detail": {
+        "targets": 0
+      }
+    },
+    {
+      "name": "two invalid JSON replies automatically fall back to curated in real CEP",
+      "status": "pass",
+      "detail": {
+        "calls": 2,
+        "status": "AI 不可用，已回退精选模式 · AI 连续两次未返回严格 JSON"
+      }
+    },
+    {
+      "name": "source edit between suggestion and apply is rejected before native draw",
+      "status": "pass",
+      "detail": {
+        "rejected": true
+      }
+    },
+    {
+      "name": "switch native document during network wait rejects delayed suggestion",
+      "status": "pass",
+      "detail": {
+        "rejected": true
+      }
+    }
+  ],
+  "runtime": {
+    "versions": {
+      "node": "17.7.2",
+      "v8": "9.9.115.10",
+      "uv": "1.43.0",
+      "zlib": "1.2.11",
+      "brotli": "1.0.9",
+      "ares": "1.18.1",
+      "modules": "102",
+      "nghttp2": "1.47.0",
+      "napi": "8",
+      "llhttp": "6.0.4",
+      "openssl": "3.0.2+quic",
+      "icu": "70.1",
+      "unicode": "14.0",
+      "cep": "12.0.0",
+      "chromium": "99.0.4844.84"
+    },
+    "cep": true
+  },
+  "status": "pass"
+}

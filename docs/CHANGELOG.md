@@ -1,5 +1,12 @@
 # 变更记录
 
+## 未发布 — M8（自动与CEP验证通过，待真实AI，2026-10-17）
+
+- 添加OpenAI兼容Chat Completions与Anthropic Messages；本机独立AI配置、数值摘要、60秒HTTPS请求、严格JSON重试一次和失败精选回退，无新增依赖。
+- 过滤未知id和越界目标，先校验建议再显式应用；同一核心重新计算测量、目标标签、偏差和目标图元，来源几何不改。分组与说明以纯文本显示。
+- 网络期间busy保护；应用前复核文档、runId、a、设置及来源Geometry；刷新清除会话目标，隐藏状态沿用既有Doc Data。
+- 186项自动测试、9份ES3通过；6项真实CEP检查通过（远端响应模拟），原生目标圆/显隐/来源不变已确认。真实调用尚未完成，不发布v0.3、不进入M9。
+
 ## v0.2.0 — M7（已验收，2026-10-17）
 
 - Added CEP11 panel manifest, official CSInterface v11 and SDK license provenance.
