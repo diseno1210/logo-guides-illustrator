@@ -9,11 +9,11 @@ test('F3 widths, bbox gaps, automatic a and un-snapped labels match the specific
  r.analysis.stems.forEach(s=>{assert.equal(s.measure.target,null);assert.equal(s.measure.devAbs,null);assert.equal(s.measure.severity,'none');});
  const labels=r.render.primitives.filter(p=>p.type==='label');assert.equal(labels.length,5);assert.ok(labels.every(p=>p.pos[1]>100));
 });
-test('F3 step snapping gives 0.95a/+1.05% and 1.05a/-0.95% with bilingual warning details',()=>{
+test('F3 step snapping gives 0.95a/+1.05% and 1.05a/-0.95% with symbolic measured details in either language',()=>{
  const r=analyze(getFixture('F3'),{snapMode:'step',snapStep:0.05});const stem=r.analysis.stems[2].measure;const gap=r.analysis.gaps[1].measure;
  near(stem.target,0.95);near(stem.dev,0.010526315789);assert.equal(stem.severity,'warn');near(gap.target,1.05);near(gap.dev,-0.009523809524);assert.equal(gap.severity,'warn');
- const label=r.render.primitives.find(p=>p.type==='label'&&p.featureId==='S3');assert.equal(label.lines[0].text,'0.95a');assert.equal(label.lines[1].text,'实测 0.960a · +0.20pt');
- const en=analyze(getFixture('F3'),{snapMode:'step',uiLanguage:'en'});assert.match(en.render.primitives.find(p=>p.type==='label'&&p.featureId==='G2').lines[1].text,/meas\. 1\.040a · -0\.20pt/);
+ const label=r.render.primitives.find(p=>p.type==='label'&&p.featureId==='S3');assert.equal(label.lines[0].text,'0.95a');assert.equal(label.lines[1].text,'◇ 0.96a · +0.20pt');
+ const en=analyze(getFixture('F3'),{snapMode:'step',uiLanguage:'en'});assert.match(en.render.primitives.find(p=>p.type==='label'&&p.featureId==='G2').lines[1].text,/◇ 1\.04a · -0\.20pt/);
 });
 test('F4 merges interrupted diagonal strokes, keeps width20 and locates modules away from crossing',()=>{
  const r=analyze(getFixture('F4'));assert.equal(r.analysis.stems.length,2);

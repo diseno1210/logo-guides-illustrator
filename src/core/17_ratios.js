@@ -4,6 +4,8 @@ LG.ratios=(function(){
     function number(value,digits){var text=value.toFixed(digits);if(Number(text)===0){text=(0).toFixed(digits);}return text;}
     function compact(value){return number(value,6).replace(/0+$/g,"").replace(/\.$/,"");}
     function display(value){return Math.abs(value-1)<1e-9?"a":compact(value)+"a";}
+    /** Display precision only; never change the measurement or AI target. */
+    function valueText(value,angular,cfg){return !angular&&Math.abs(value-1)<1e-9?"a":number(value,cfg.settings.labelDecimals)+(angular?"°":"a");}
     function severity(dev,ok,warn){return Math.abs(dev)<=ok+1e-12?"ok":(Math.abs(dev)<=warn+1e-12?"warn":"bad");}
     /** Contract measurement for a positive length. */
     function measure(value,a,cfg){
@@ -16,7 +18,13 @@ LG.ratios=(function(){
         return {value:value,ratio:ratio,display:display(Math.round(ratio/s.labelPrecision)*s.labelPrecision),target:target,targetDisplay:targetDisplay,special:special,dev:dev,devAbs:target===null?null:value-target*a,severity:dev===null?"none":severity(dev,cfg.devOk,cfg.devWarn)};
     }
     /** Label lines for dimensional or angular measurements. */
-    function labelLines(m,cfg){var lines=[{text:m.target===null?m.display:m.targetDisplay,sizeFactor:1,style:"text"}];if(m.severity==="warn"||m.severity==="bad"){var angle=m.ratio===null;var raw=angle?number(m.value,1)+"°":number(m.ratio,3)+"a";var delta=angle?number(m.devAbs,1)+"°":number(m.devAbs,2)+"pt";lines.push({text:(cfg.settings.uiLanguage==="en"?"meas. ":"实测 ")+raw+" · "+(m.devAbs>=0?"+":"")+delta,sizeFactor:0.75,style:m.severity==="warn"?"textWarn":"textBad"});}return lines;}
+    function labelLines(m,cfg){
+        var angle=m.ratio===null;var s=cfg.settings;var raw=valueText(angle?m.value:m.ratio,angle,cfg);
+        if(cfg.settings.measurementLabelMode==="measured"){return [{text:"◇ "+raw,sizeFactor:1,style:"text"}];}
+        var shown=m.target!==null?m.target:(angle?Math.round(m.value/s.angleLabelPrecision)*s.angleLabelPrecision:Math.round(m.ratio/s.labelPrecision)*s.labelPrecision);
+        var lines=[{text:valueText(shown,angle,cfg),sizeFactor:1,style:"text"}];
+        if(m.severity==="warn"||m.severity==="bad"){var delta=number(m.devAbs,s.labelDecimals)+(angle?"°":"pt");lines.push({text:"◇ "+raw+" · "+(Number(number(m.devAbs,s.labelDecimals))>=0?"+":"")+delta,sizeFactor:0.75,style:m.severity==="warn"?"textWarn":"textBad"});}return lines;
+    }
     /** Angular measurement, independent from dimensional snapMode. */
     function angle(value,cfg){var s=cfg.settings;var target=s.angleSnapStep>0?Math.round(value/s.angleSnapStep)*s.angleSnapStep:null;var dev=target===null?null:value-target;return {value:value,ratio:null,display:compact(Math.round(value/s.angleLabelPrecision)*s.angleLabelPrecision)+"°",target:target,targetDisplay:target===null?null:compact(target)+"°",special:null,dev:dev,devAbs:dev,severity:dev===null?"none":severity(dev,cfg.angleDevOk,cfg.angleDevWarn)};}
     /** Assign all currently implemented measurements in place. */
@@ -29,5 +37,5 @@ LG.ratios=(function(){
             m.target=target;m.targetDisplay=angular?compact(target)+"°":display(target);m.special=null;m.dev=angular?actual-target:(actual-target)/target;m.devAbs=angular?m.dev:m.value-target*unit.value;m.severity=angular?severity(m.dev,model.config.angleDevOk,model.config.angleDevWarn):severity(m.dev,model.config.devOk,model.config.devWarn);model.aiTargets["$"+f.id]=true;
         });
     }
-    return {measure:measure,angle:angle,labelLines:labelLines,run:run,overrides:overrides,number:number,display:display};
+    return {measure:measure,angle:angle,labelLines:labelLines,valueText:valueText,run:run,overrides:overrides,number:number,display:display};
 }());

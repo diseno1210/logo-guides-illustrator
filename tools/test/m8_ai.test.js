@@ -85,6 +85,10 @@ test('M8 ES3 core target overrides update measurements, labels and real target p
   const result=plain(LG.analyze(geometry,settings,context)),after=ai.summary(result.analysis,'check');
   assert.equal(JSON.stringify(geometry),before);assert.deepEqual(plain(result.analysis.bbox),plain(base.analysis.bbox));
   for(const t of targets){const f=after.features.find(f=>f.id===t.id);assert.equal(f.target,t.target);seen.add(f.type);assert.ok(result.render.primitives.some(p=>p.layer==='targets'&&p.featureId===t.id),fixture+' '+f.type+' '+t.id);assert.ok(result.render.primitives.some(p=>p.type==='label'&&p.featureId===t.id),fixture+' label '+t.id);}
+  const measured=plain(LG.analyze(geometry,{...settings,measurementLabelMode:'measured'},context));
+  assert.ok(!measured.render.primitives.some(p=>p.layer==='targets'));
+  const measuredSummary=ai.summary(measured.analysis,'check');assert.deepEqual(measuredSummary,after);
+  for(const t of targets){const labels=measured.render.primitives.filter(p=>p.type==='label'&&p.featureId===t.id);assert.ok(labels.length,fixture+' measured '+t.id);for(const p of labels){assert.equal(p.lines.length,1);assert.match(p.lines[0].text,/^(R )?◇/);assert.doesNotMatch(p.lines[0].text,/实测|meas\.| · /);}}
   assert.ok(!plain(LG.analyze(geometry,settings)).render.primitives.some(p=>p.layer==='targets'));
  }
  for(const type of ['stem','gap','height','counter','circle','ring','angle'])assert.ok(seen.has(type),type+' not exercised');
@@ -112,6 +116,21 @@ test('M8 controller stages suggestions then applies targets and visibility using
  await h.c.requestAI(config,'check');assert.equal(h.draws,count);assert.ok(h.c.state.ai.pending);
  await h.c.applyAI();assert.equal(h.draws,count+1);assert.equal(JSON.stringify(h.c.state.geometry),before);assert.equal(h.c.state.hidden.length,1);assert.ok(h.c.state.result.render.primitives.some(p=>p.layer==='targets'));assert.equal(h.c.state.ai.pending,null);
  await h.c.run('sources');assert.ok(!h.c.state.result.render.primitives.some(p=>p.layer==='targets'));assert.equal(h.c.state.ai.notes,'');
+});
+
+test('label mode switches preserve applied AI targets, visibility, geometry and notes without another network request',async()=>{
+ let requests=0;const h=controller(async(c,input)=>{requests++;return {...answer(),hide:[input.features[0].id],targets:[{id:'C1',target:input.features.find(f=>f.id==='C1').rRatio*1.04}]};});
+ await h.c.run('selection');await h.c.requestAI(config,'check');await h.c.applyAI();
+ const before=JSON.stringify(h.c.state.geometry),hidden=JSON.stringify(h.c.state.hidden),target=h.c.state.result.analysis.circles[0].measureR.target;
+ await h.c.labels('measured');assert.equal(h.c.state.settings.measurementLabelMode,'measured');assert.ok(!h.c.state.result.render.primitives.some(p=>p.layer==='targets'));assert.equal(h.c.state.result.analysis.circles[0].measureR.target,target);assert.equal(JSON.stringify(h.c.state.hidden),hidden);
+ await h.c.labels('compare');assert.ok(h.c.state.result.render.primitives.some(p=>p.layer==='targets'));assert.equal(h.c.state.ai.notes,'说明');assert.equal(JSON.stringify(h.c.state.geometry),before);assert.equal(requests,1);
+ const count=h.draws;await assert.rejects(()=>h.c.labels('invalid'),/Invalid/);assert.equal(h.draws,count);assert.equal(h.c.state.settings.measurementLabelMode,'compare');
+ h.setToken('doc-two');await assert.rejects(()=>h.c.labels('measured'),/文档已切换/);assert.equal(h.draws,count);
+});
+
+test('label mode refuses edited source geometry before redraw',async()=>{
+ const h=controller(async()=>answer());await h.c.run('selection');const count=h.draws;const g=fixtures.F9();g.parts[0].contours[0].points[0].a[0]+=1;h.setGeometry(g);
+ await assert.rejects(()=>h.c.labels('measured'),/来源几何/);assert.equal(h.draws,count);assert.equal(h.c.state.settings.measurementLabelMode,'compare');
 });
 test('M8 network/config failures fall back to curated after checking document identity',async()=>{
  const h=controller(async()=>{throw Error('HTTP 503');});await h.c.run('selection');const result=await h.c.requestAI(config,'presentation');assert.equal(result.fallback,true);assert.equal(h.c.state.curated,true);assert.match(h.c.state.status,/回退精选/);assert.equal(h.c.state.busy,false);

@@ -19,7 +19,7 @@ function harness(){
     frames.push(text);return text;
   };return frames;}
   function groups(){const list=[];list.add=()=>{
-    const group={name:'',dx:0,dy:0,translate(x,y){this.dx+=x;this.dy+=y;},rotate(...args){this.rotation=args;}};
+    const group={name:'',dx:0,dy:0,remove(){list.splice(list.indexOf(group),1);},translate(x,y){this.dx+=x;this.dy+=y;},rotate(...args){this.rotation=args;}};
     group.textFrames=textFrames(group);
     Object.defineProperty(group,'geometricBounds',{get(){const boxes=group.textFrames.map(t=>t.geometricBounds);return [Math.min(...boxes.map(b=>b[0]))+group.dx,Math.max(...boxes.map(b=>b[1]))+group.dy,Math.max(...boxes.map(b=>b[2]))+group.dx,Math.min(...boxes.map(b=>b[3]))+group.dy];}});
     list.push(group);return group;

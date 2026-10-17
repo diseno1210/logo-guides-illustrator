@@ -1,0 +1,363 @@
+{
+  "version": "0.3.2",
+  "date": "2026-10-17T03:52:26.195Z",
+  "specificationSha256": "f467fbb3475bb97a34b1732e4e7569975ce43f89561180d7b3ef4cae3982e75d",
+  "automatic": {
+    "command": "node tools/run_tests.js",
+    "tests": 200,
+    "passed": 200,
+    "failed": 0,
+    "skipped": 0,
+    "todo": 0,
+    "log": ".cache/appearance-ai-final-200.log"
+  },
+  "compatibility": {
+    "commands": [
+      "node tools/build.js",
+      "node tools/check_es3.js"
+    ],
+    "es3Artifacts": 9,
+    "status": "pass"
+  },
+  "specialized": {
+    "path": "dist/native-acceptance/appearance-ai-delivery-03/results.json",
+    "date": "2026-10-17T03:52:26.195Z",
+    "checks": [
+      {
+        "name": "isolated native BOATCHIN setup",
+        "status": "pass",
+        "detail": "ready"
+      },
+      {
+        "name": "CEP generate and all-family avoidance",
+        "status": "pass",
+        "detail": {
+          "labels": 42,
+          "collisions": 0,
+          "base": {
+            "value": 5.91301284293195,
+            "source": "auto-stem",
+            "locked": true
+          }
+        }
+      },
+      {
+        "name": "actual appearance UI events and persisted settings",
+        "status": "pass",
+        "detail": {
+          "font": 4.5,
+          "appearance": {
+            "textColor": "#112233",
+            "lineColor": "#445566",
+            "strokeWidth": 0,
+            "dashMode": "dashed",
+            "dashLength": 1.5,
+            "dashGap": 0.75
+          }
+        }
+      },
+      {
+        "name": "native text metrics, colors and physical stroke dashes",
+        "status": "pass",
+        "detail": {
+          "font": 4.5,
+          "text": [
+            17,
+            34,
+            51
+          ],
+          "line": [
+            68,
+            85,
+            102
+          ],
+          "dashes": [
+            1.5,
+            0.75
+          ],
+          "collisions": 0
+        }
+      },
+      {
+        "name": "tidy button is repeatable and retains source geometry and locked base",
+        "status": "pass",
+        "detail": {
+          "font": 4.2,
+          "base": 5.91301284293195,
+          "primitives": 95
+        }
+      },
+      {
+        "name": "arc slider and physical width UI settings persist",
+        "status": "pass",
+        "detail": {
+          "extensionPerEnd": 75,
+          "width": 0.35,
+          "grown": 12,
+          "decimalPlaces": [
+            4,
+            2
+          ]
+        }
+      },
+      {
+        "name": "actual AI apply uses shared appearance and arc mode",
+        "status": "pass",
+        "detail": {
+          "targets": 1,
+          "types": [
+            "arc"
+          ],
+          "hidden": 13
+        }
+      },
+      {
+        "name": "native AI target width color dashes and label size match panel",
+        "status": "pass",
+        "detail": {
+          "targetLines": [
+            {
+              "width": 0.34999999403954,
+              "rgb": [
+                68,
+                85,
+                102
+              ],
+              "dashes": [
+                1.5,
+                0.75
+              ]
+            }
+          ],
+          "labelCount": 27,
+          "fontSizes": [
+            3.15000009536743,
+            4.19999980926514
+          ]
+        }
+      },
+      {
+        "name": "measured and compare UI modes retain targets and hidden state without requesting AI again",
+        "status": "pass",
+        "detail": {
+          "measuredLabels": 27,
+          "requests": 1,
+          "base": 5.91301284293195,
+          "hidden": 13
+        }
+      },
+      {
+        "name": "native tidy artwork export",
+        "status": "pass",
+        "detail": "artwork.png"
+      }
+    ],
+    "runtime": {
+      "versions": {
+        "node": "17.7.2",
+        "v8": "9.9.115.10",
+        "uv": "1.43.0",
+        "zlib": "1.2.11",
+        "brotli": "1.0.9",
+        "ares": "1.18.1",
+        "modules": "102",
+        "nghttp2": "1.47.0",
+        "napi": "8",
+        "llhttp": "6.0.4",
+        "openssl": "3.0.2+quic",
+        "icu": "70.1",
+        "unicode": "14.0",
+        "cep": "12.0.0",
+        "chromium": "99.0.4844.84"
+      },
+      "cep": true
+    },
+    "status": "pass",
+    "aiResponse": "simulated; UI, core, CSInterface and native artwork are real"
+  },
+  "regression": {
+    "path": "dist/native-acceptance/appearance-ai-final-regression/results.json",
+    "date": "2026-10-17T03:52:57.015Z",
+    "runtime": {
+      "versions": {
+        "node": "17.7.2",
+        "v8": "9.9.115.10",
+        "uv": "1.43.0",
+        "zlib": "1.2.11",
+        "brotli": "1.0.9",
+        "ares": "1.18.1",
+        "modules": "102",
+        "nghttp2": "1.47.0",
+        "napi": "8",
+        "llhttp": "6.0.4",
+        "openssl": "3.0.2+quic",
+        "icu": "70.1",
+        "unicode": "14.0",
+        "cep": "12.0.0",
+        "chromium": "99.0.4844.84"
+      },
+      "cep": true
+    },
+    "checks": [
+      {
+        "name": "F9 native fixture setup",
+        "status": "pass",
+        "detail": "ready"
+      },
+      {
+        "name": "real CEP generate button",
+        "status": "pass",
+        "detail": {
+          "timing": {
+            "readMs": 3,
+            "readProfile": {
+              "sourcesMs": 1,
+              "geometryMs": 1
+            },
+            "computeMs": 6.299999998882413,
+            "drawMs": 57,
+            "totalMs": 126.30000000074506
+          },
+          "primitives": 19,
+          "status": "完成 · 19 图元 · a=20 pt · 126 ms"
+        }
+      },
+      {
+        "name": "real CEP V8 and native ExtendScript primitive parity <=1e-6",
+        "status": "pass",
+        "detail": {
+          "primitives": 19,
+          "maxNumericError": 3.552713678800501e-13
+        }
+      },
+      {
+        "name": "visible feature actual native selection",
+        "status": "pass",
+        "detail": {
+          "matched": 1,
+          "selected": 1,
+          "temporarilyUnlocked": true
+        }
+      },
+      {
+        "name": "hide, refresh geometry match, show",
+        "status": "pass",
+        "detail": {
+          "hidden": 0
+        }
+      },
+      {
+        "name": "manual a and automatic a",
+        "status": "pass",
+        "detail": {
+          "value": 20,
+          "source": "auto-stem",
+          "locked": false
+        }
+      },
+      {
+        "name": "style and curated refresh, geometry dump",
+        "status": "pass",
+        "detail": {
+          "parts": 2,
+          "features": 12
+        }
+      },
+      {
+        "name": "switched native document rejects delayed refresh and clear",
+        "status": "pass",
+        "detail": {
+          "rejected": 3
+        }
+      },
+      {
+        "name": "actual UI measurements, visibility, selection, style, slider and dump buttons",
+        "status": "pass",
+        "detail": {
+          "candidates": 1,
+          "status": "已导出 C:\\Users\\disen\\AppData\\Roaming\\LogoGuides\\geometry_dump.json"
+        }
+      },
+      {
+        "name": "clear UI auto",
+        "status": "pass",
+        "detail": {
+          "status": "完成 · 19 图元 · a=20 pt · 139 ms",
+          "hasData": true
+        }
+      },
+      {
+        "name": "clear UI all",
+        "status": "pass",
+        "detail": {
+          "status": "完成 · 19 图元 · a=20 pt · 90 ms",
+          "hasData": true
+        }
+      },
+      {
+        "name": "clear UI data",
+        "status": "pass",
+        "detail": {
+          "status": "已清除",
+          "hasData": false
+        }
+      },
+      {
+        "name": "F10 native fixture setup",
+        "status": "pass",
+        "detail": "ready"
+      },
+      {
+        "name": "F10 real CEP generation and refresh <=3000ms",
+        "status": "pass",
+        "detail": {
+          "generate": {
+            "readMs": 755,
+            "readProfile": {
+              "sourcesMs": 2,
+              "geometryMs": 751
+            },
+            "computeMs": 132.7000000011176,
+            "drawMs": 230,
+            "totalMs": 1307.6000000014901
+          },
+          "refresh": {
+            "readMs": 919,
+            "readProfile": {
+              "sourcesMs": 7,
+              "geometryMs": 910
+            },
+            "computeMs": 135.7999999988824,
+            "drawMs": 148,
+            "totalMs": 1408.4000000003725
+          },
+          "primitives": 101
+        }
+      }
+    ],
+    "status": "pass"
+  },
+  "failedProbeSummary": {
+    "observed": [
+      "Illustrator PARM (1346458189)",
+      "Target layer cannot be modified despite unlocked layer/root",
+      "Illustrator CANT (1128353364) during cleanup",
+      "Over-strict floating point assertion corrected to tolerance",
+      "Hidden-descriptor order compared as ID sets",
+      "Old UI dump after native write error; acceptance now rejects error state"
+    ],
+    "preservedUnder": "dist/native-acceptance/",
+    "recovery": "Activate/unlock auxiliary layer and created objects; redraw after rebuilding layers. Only recognized creation errors retry once after successful cleanup. No object returned: retry only if collection count unchanged. Cleanup failure or second failure propagates.",
+    "scope": "Final specialized 10/10 and regression 14/14 passed; this does not establish that all native Illustrator errors are eliminated."
+  },
+  "limitations": [
+    "AI response in this round is simulated; prior M8 live-service evidence is separate.",
+    "Finite label avoidance may still allow line/text intersections on complex logos.",
+    "Native Illustrator guides retain host-controlled appearance.",
+    "Self-signed, untimestamped package and clean-machine M9 installation remain separate acceptance."
+  ],
+  "artifacts": {
+    "artwork": "dist/native-acceptance/appearance-ai-delivery-03/artwork.png",
+    "panel": "dist/native-acceptance/appearance-ai-delivery-03/panel.png"
+  }
+}

@@ -22,6 +22,12 @@
   [['avoidLabelOverlap','标注自动避让'],['labelDedup','同值尺寸去重'],['circleLabels','显示半径标签']].forEach(f=>makeCheck('labelChecks','setting-'+f[0],f[1],v=>{controller.state.settings[f[0]]=v;schedule();}));
   features.forEach(f=>makeCheck('features','feature-'+f[0],f[1],v=>{controller.state.settings.features[f[0]]=v;schedule();}));
   function button(parent,text,fn) { const b=document.createElement('button');b.textContent=text;b.disabled=controller.state.busy;b.addEventListener('click',()=>action(fn));$(parent).appendChild(b); }
+  function deviation(f,decimals){
+    if(!f.measure||f.measure.dev===null)return '—';
+    const value=f.measure.ratio===null?f.measure.dev:100*f.measure.dev;
+    const rounded=LG.ratios.number(value,decimals);
+    return '偏差 '+(Number(rounded)>0?'+':'')+rounded+(f.measure.ratio===null?'°':'%');
+  }
   function sync(s) {
     $('status').textContent=s.status; $('status').classList.remove('error');
     fields.forEach(f=>$('setting-'+f[0]).value=String(s.settings[f[0]]));
@@ -29,16 +35,22 @@
     features.forEach(f=>$('feature-'+f[0]).checked=s.settings.features[f[0]]);
     const appearance=s.settings.appearance || LG.config.defaults().appearance;
     $('labelFontSize').value=s.settings.fontSize;$('circleDisplay').value=s.settings.circleDisplay;
+    $('labelDecimals').value=s.settings.labelDecimals;
     ['avoidLabelOverlap','labelDedup','circleLabels'].forEach(key=>$('setting-'+key).checked=s.settings[key]);
     const style=LG.styles.preset(s.settings.stylePreset);
     $('useTextColor').checked=!!appearance.textColor;$('useLineColor').checked=!!appearance.lineColor;
     $('textColor').value=appearance.textColor||style.text.fillHex;$('lineColor').value=appearance.lineColor||style.baseline.stroke;
-    ['dashMode','dashLength','dashGap'].forEach(key=>$(key).value=appearance[key]);
+    ['strokeWidth','dashMode','dashLength','dashGap'].forEach(key=>$(key).value=appearance[key]);
+    $('circleExtend').value=s.settings.circleExtendDeg;$('extendValue').textContent=s.settings.circleExtendDeg+'° / 端';
     if(!baseEditing)$('baseValue').value=s.settings.baseUnit.value||s.docData&&s.docData.baseUnit.value||'';
     $('baseLock').checked=s.settings.baseUnit.locked;
     const cfg=LG.config.resolve(s.settings);$('circleFit').value=cfg.circleFitTol;$('fitValue').textContent=(100*cfg.circleFitTol).toFixed(2)+'%';
     document.body.classList.toggle('light',s.settings.stylePreset==='light');
     document.querySelectorAll('button,input,select').forEach(el=>el.disabled=s.busy);
+    $('circleExtend').disabled=s.busy||s.settings.circleDisplay!=='extended';
+    $('measuredLabels').disabled=s.busy||!s.result||s.settings.measurementLabelMode==='measured';
+    $('compareLabels').disabled=s.busy||!s.result||s.settings.measurementLabelMode==='compare';
+    $('labelModeHint').textContent=s.settings.measurementLabelMode==='measured'?'当前：仅用 ◇ 实际测量标注；目标图元隐藏。':'当前：目标对照；主行是目标（没有目标时为实际值），◇ 行是实际值与偏差。';
     $('curated').checked=s.curated;
     $('aiApply').disabled=s.busy || !s.ai.pending;
     $('aiRequest').disabled=s.busy || !s.result;
@@ -55,7 +67,7 @@
     const hidden=LG.panelModel.idSet(s.hidden);let last='';
     const sorted=$('view').value==='severity'?LG.panelModel.severity(s.features):s.features.slice().sort((a,b)=>a.type.localeCompare(b.type)||a.id.localeCompare(b.id));
     if(!sorted.length){const p=document.createElement('p');p.className='muted';p.textContent='生成或刷新后显示特征。';list.appendChild(p);}
-    sorted.forEach(function(f){const group=$('view').value==='severity'?f.severity:f.type;if(group!==last){const h=document.createElement('div');h.className='feature-group';h.textContent=types[group]||group;list.appendChild(h);last=group;}const row=document.createElement('div');row.className='feature';const check=document.createElement('input');check.type='checkbox';check.checked=!hidden['$'+f.id];check.disabled=s.busy;check.setAttribute('aria-label','显示 '+f.id);check.addEventListener('change',()=>action(async()=>{await controller.visible(f.id,check.checked);await controller.run('sources');}));const b=document.createElement('button');b.disabled=s.busy;b.textContent=f.id+' · '+(f.display||'');b.title='在 Illustrator 中选中';b.addEventListener('click',()=>action(()=>controller.select(f.id)));const dev=document.createElement('span');dev.className='dev '+f.severity;dev.textContent=f.measure&&f.measure.dev!==null?String(f.measure.dev):'—';row.append(check,b,dev);list.appendChild(row);});
+    sorted.forEach(function(f){const group=$('view').value==='severity'?f.severity:f.type;if(group!==last){const h=document.createElement('div');h.className='feature-group';h.textContent=types[group]||({bad: "偏差较大",warn: "存在偏差",ok: "在容差内",none: "无目标"}[group])||group;list.appendChild(h);last=group;}const row=document.createElement('div');row.className='feature';const check=document.createElement('input');check.type='checkbox';check.checked=!hidden['$'+f.id];check.disabled=s.busy;check.setAttribute('aria-label','显示 '+f.id);check.addEventListener('change',()=>action(async()=>{await controller.visible(f.id,check.checked);await controller.run('sources');}));const b=document.createElement('button');b.disabled=s.busy;b.textContent=(types[f.type]||f.type)+' '+f.id+' · '+(f.measure?LG.ratios.labelLines(f.measure,LG.config.resolve(s.settings))[0].text:(f.display||''));b.title='在 Illustrator 中选中';b.addEventListener('click',()=>action(()=>controller.select(f.id)));const dev=document.createElement('span');dev.className='dev '+f.severity;dev.textContent=deviation(f,s.settings.labelDecimals);dev.title='相对目标的偏差；角度用度，其余用百分比';row.append(check,b,dev);list.appendChild(row);});
   }
   try {
     if(!window.__adobe_cep__)throw new Error('请在 Illustrator 的「窗口 → 扩展」中打开此面板。');
@@ -74,11 +86,13 @@
     $('circleFit').oninput=function(){controller.state.settings.advanced.circleFitTol=Number(this.value);$('fitValue').textContent=(100*Number(this.value)).toFixed(2)+'%';schedule();};
     function editAppearance(edit){const next=LG.util.clone(controller.state.settings);edit(next);try{controller.state.settings=LG.config.resolve(next).settings;sync(controller.state);schedule();}catch(error){report(error);}}
     $('labelFontSize').onchange=function(){editAppearance(s=>{s.fontSize=Number(this.value);});};
+    $('labelDecimals').onchange=function(){editAppearance(s=>{s.labelDecimals=Number(this.value);});};
     $('circleDisplay').onchange=function(){editAppearance(s=>{s.circleDisplay=this.value;});};
     ['textColor','lineColor'].forEach(key=>{const toggle=key==='textColor'?'useTextColor':'useLineColor';$(key).onchange=function(){editAppearance(s=>{s.appearance[key]=this.value;});};$(toggle).onchange=function(){editAppearance(s=>{s.appearance[key]=this.checked?$(key).value:'';});};});
-    ['dashMode','dashLength','dashGap'].forEach(key=>{$(key).onchange=function(){editAppearance(s=>{s.appearance[key]=key==='dashMode'?this.value:Number(this.value);});};});
+    ['strokeWidth','dashMode','dashLength','dashGap'].forEach(key=>{$(key).onchange=function(){editAppearance(s=>{s.appearance[key]=key==='dashMode'?this.value:Number(this.value);});};});
+    $('circleExtend').oninput=function(){editAppearance(s=>{s.circleExtendDeg=Number(this.value);});};
     $('tidyPresentation').onclick=()=>{controller.state.curated=true;editAppearance(s=>{const automatic=controller.state.result?LG.config.derive(LG.config.resolve({fontSize:0}),controller.state.result.analysis.S,controller.state.result.analysis.D).fs:6;s.fontSize=Math.max(3,Math.round(automatic*0.65*10)/10);s.stylePreset='light';s.circleDisplay='extended';s.labelDedup=true;s.avoidLabelOverlap=true;s.circleLabels=false;s.features.angles=false;s.features.constructionLines=false;s.features.deviationMarkers=false;});};
-    $('resetAppearance').onclick=()=>editAppearance(s=>{s.appearance=LG.config.defaults().appearance;s.fontSize=0;s.circleDisplay='full';s.circleLabels=false;s.labelDedup=false;s.avoidLabelOverlap=true;});
+    $('resetAppearance').onclick=()=>editAppearance(s=>{s.appearance=LG.config.defaults().appearance;s.fontSize=0;s.labelDecimals=2;s.circleDisplay='full';s.circleExtendDeg=30;s.circleLabels=false;s.labelDedup=false;s.avoidLabelOverlap=true;});
     $('curated').onchange=function(){controller.state.curated=this.checked;schedule();};
     $('view').onchange=()=>renderList(controller.state);
     $('aiGoal').onchange=()=>sync(controller.state);
@@ -86,6 +100,8 @@
     $('aiSave').onclick=()=>action(()=>{aiStore.save(aiConfig());$('aiConfigStatus').textContent='已保存本机配置（明文）';});
     $('aiRequest').onclick=()=>action(()=>controller.requestAI(aiConfig(),$('aiGoal').value));
     $('aiApply').onclick=()=>action(()=>controller.applyAI());
+    $('measuredLabels').onclick=()=>action(()=>controller.labels('measured'));
+    $('compareLabels').onclick=()=>action(()=>controller.labels('compare'));
     document.querySelectorAll('[data-clear]').forEach(b=>b.onclick=()=>action(()=>controller.clear(b.getAttribute('data-clear'))));
     $('dump').onclick=()=>action(async function(){const json=await controller.dump();const fs=require('fs');const path=require('path');const folder=path.join(new CSInterface().getSystemPath(SystemPath.USER_DATA),'LogoGuides');fs.mkdirSync(folder,{recursive:true});const target=path.join(folder,'geometry_dump.json');fs.writeFileSync(target,json,'utf8');controller.state.status='已导出 '+target;sync(controller.state);});
     action(()=>controller.init());

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<ExtensionManifest Version="7.0" ExtensionBundleId="local.logoguides" ExtensionBundleVersion="0.3.1" ExtensionBundleName="Logo Guides">
-  <ExtensionList><Extension Id="local.logoguides.panel" Version="0.3.1"/></ExtensionList>
+<ExtensionManifest Version="7.0" ExtensionBundleId="local.logoguides" ExtensionBundleVersion="0.3.2" ExtensionBundleName="Logo Guides">
+  <ExtensionList><Extension Id="local.logoguides.panel" Version="0.3.2"/></ExtensionList>
   <ExecutionEnvironment>
     <HostList><Host Name="ILST" Version="[25.0,99.9]"/></HostList>
     <LocaleList><Locale Code="All"/></LocaleList>

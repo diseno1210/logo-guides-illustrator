@@ -6,7 +6,7 @@ LG.config = (function () {
         features: { baselines: true, overshoot: true, verticals: true, stemWidths: true, gaps: true, heights: false, counters: false, circles: true, ringThickness: true, angles: true, constructionLines: true, targetLines: true, deviationMarkers: true, clearSpace: false, legend: true, background: false },
         circleDisplay: "full", circleExtendDeg: 30, circleLabels: false, maxCircles: 24, maxAngles: 12, maxConstructionLines: 40, stemLabelStyle: "lanes", labelDedup: false, output: "styled", lockLayer: true, stylePreset: "dark", extendTo: "margin", marginFactor: 0.2, clearSpaceFactor: 1, legendLanguage: "both", uiLanguage: "zh", fontSize: 0,
         fontNames: ["Roboto-Regular", "ArialMT", "Helvetica", "MyriadPro-Regular"], cjkFontNames: ["SourceHanSansSC-Regular", "AdobeHeitiStd-Regular", "PingFangSC-Regular", "MicrosoftYaHei"], autoOutlineText: true, showSummary: true, debug: false, advanced: {},
-        avoidLabelOverlap: true, appearance: { textColor: "", lineColor: "", dashMode: "preset", dashLength: 3, dashGap: 2 }
+        avoidLabelOverlap: true, measurementLabelMode: "compare", labelDecimals: 2, appearance: { textColor: "", lineColor: "", strokeWidth: 0, dashMode: "preset", dashLength: 3, dashGap: 2 }
     };
     var presets = {
         loose: { circleFitTol: 0.04, circleAbsCapRel: 0.02, circleMergeTol: 0.04, clusterTolRel: 0.008, widthClusterTol: 0.05, parallelAngleTol: 1.5, axisAngleTol: 2, lineStraightTol: 0.004 },
@@ -32,6 +32,8 @@ LG.config = (function () {
         var settings = LG.util.deepMerge(defaults, input); var cfg; var key; var val;
         validateTypes(settings, defaults, "");
         var appearance=settings.appearance;
+        if(settings.labelDecimals<0||settings.labelDecimals>4||settings.labelDecimals!==Math.floor(settings.labelDecimals)){throw new Error("Invalid label decimal places");}
+        if(appearance.strokeWidth<0||appearance.strokeWidth>100||settings.circleExtendDeg>180||LG.util.indexOf(["compare","measured"],settings.measurementLabelMode)<0){throw new Error("Invalid appearance range or measurement label mode");}
         LG.util.each(["textColor","lineColor"],function(name){if(appearance[name]!==""&&!/^#[0-9a-fA-F]{6}$/.test(appearance[name])){throw new Error("Invalid appearance color: "+name);}});
         if(LG.util.indexOf(["preset","solid","dashed"],appearance.dashMode)<0||appearance.dashLength<=0||appearance.dashGap<=0||appearance.dashLength>1000||appearance.dashGap>1000){throw new Error("Invalid appearance dashes");}
         for (key in enums) { if (LG.util.has(enums, key) && LG.util.indexOf(enums[key], settings[key]) < 0) { throw new Error("Invalid setting: " + key); } }

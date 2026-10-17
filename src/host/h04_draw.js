@@ -1,6 +1,21 @@
 LG.hostDraw = (function () {
     var names = { labels: "LG Labels", deviation: "LG Deviation", targets: "LG Targets", angles: "LG Angles", dimensions: "LG Dimensions", circles: "LG Circles", visualLines: "LG Visual Lines", baselines: "LG Baselines", construction: "LG Construction", clearSpace: "LG Clear Space", legend: "LG Legend", snapGuides: "LG Snap Guides", manual: "LG Manual", background:"Logo Guides BG" };
     var order = ["labels", "deviation", "targets", "angles", "dimensions", "circles", "visualLines", "baselines", "construction", "clearSpace", "legend", "snapGuides"];
+    /** Illustrator sometimes invalidates a just-created item's native handle.
+     * Remove only that unfinished helper, redraw, and retry once; other errors propagate. */
+    function createNative(collection,build,factory){
+        var attempt;var item;var beforeCount;
+        for(attempt=0;attempt<2;attempt+=1){
+            item=null;beforeCount=collection.length;
+            try{item=factory?factory():collection.add();item.locked=false;item.hidden=false;build(item);return item;}
+            catch(error){
+                var retryable=/1346458189|PARM|Target layer cannot be modified/.test(String(error.message||error));
+                if(item&&retryable){LG.hostEnv.log("Native helper failure; locked="+item.locked+"; editable="+item.editable);item.locked=false;item.remove();}
+                if((!item&&collection.length!==beforeCount)||!retryable||attempt>0||typeof app.redraw!=="function"){throw error;}
+                LG.hostEnv.log("Native helper creation retry after transient Illustrator error");app.redraw();
+            }
+        }
+    }
     /** RGB hex to Illustrator document color; simple formula for CMYK. */
     function color(hex, doc) {
         var r = parseInt(hex.substr(1, 2), 16) / 255; var g = parseInt(hex.substr(3, 2), 16) / 255; var b = parseInt(hex.substr(5, 2), 16) / 255; var k; var value;
@@ -27,10 +42,14 @@ LG.hostDraw = (function () {
     }
     /** Per-line point text grouped, centered using actual bounds, then rotated. */
     function label(layer, primitive, render, styles, settings, doc) {
-        var group = layer.groupItems.add(); var cursor = 0; var i; var line; var text; var attributes; var chosen; var bounds;
+        return createNative(layer.groupItems,function(group){
+        var cursor = 0; var i; var line; var text; var attributes; var chosen; var bounds;
         group.name = primitive.featureId + ":label";
         for (i = 0; i < primitive.lines.length; i += 1) {
-            line = primitive.lines[i]; text = group.textFrames.add(); text.contents = line.text; text.position = [0, cursor];
+            line = primitive.lines[i];
+            text = group.textFrames.add();
+            text.contents = line.text;
+            text.position = [0, cursor];
             attributes = text.textRange.characterAttributes; attributes.size = render.fontSize * line.sizeFactor; attributes.fillColor = color(styles[line.style].fillHex, doc);
             chosen = font(line.text, settings); if (chosen) { attributes.textFont = chosen; }
             text.opacity = styles[line.style].opacity; text.name = primitive.featureId;
@@ -39,20 +58,21 @@ LG.hostDraw = (function () {
         }
         bounds = group.geometricBounds; group.translate(primitive.pos[0] - (bounds[0] + bounds[2]) / 2, primitive.pos[1] - (bounds[1] + bounds[3]) / 2);
         if (primitive.rotation) { group.rotate(primitive.rotation, true, true, true, true, Transformation.CENTER); }
-        return group;
+        });
     }
     /** Create a line/circle/arc/polygon with exact y-up Illustrator coordinates. */
     function shape(layer,p){
         var item;var i;var count;var step;var angle;var next;var handle;var points=[];
-        if(p.type==="circle"){return layer.pathItems.ellipse(p.c[1]+p.r,p.c[0]-p.r,2*p.r,2*p.r);}
-        item=layer.pathItems.add();
+        if(p.type==="circle"){return createNative(layer.pathItems,function(){},function(){return layer.pathItems.ellipse(p.c[1]+p.r,p.c[0]-p.r,2*p.r,2*p.r);});}
+        return createNative(layer.pathItems,function(created){item=created;points=[];
         if(p.type==="line"){item.setEntirePath([p.p0,p.p1]);}
         else if(p.type==="polygon"){item.setEntirePath(p.points);item.closed=p.closed;}
         else if(p.type==="arc"){
             count=Math.max(1,Math.ceil((p.endDeg-p.startDeg)/90));step=(p.endDeg-p.startDeg)/count*Math.PI/180;
             for(i=0;i<=count;i+=1){angle=p.startDeg*Math.PI/180+i*step;points.push([p.c[0]+p.r*Math.cos(angle),p.c[1]+p.r*Math.sin(angle)]);}item.setEntirePath(points);item.closed=false;handle=4/3*Math.tan(step/4)*p.r;
             for(i=0;i<=count;i+=1){angle=p.startDeg*Math.PI/180+i*step;next=item.pathPoints[i];next.anchor=points[i];next.leftDirection=i===0?points[i]:[points[i][0]+handle*Math.sin(angle),points[i][1]-handle*Math.cos(angle)];next.rightDirection=i===count?points[i]:[points[i][0]-handle*Math.sin(angle),points[i][1]+handle*Math.cos(angle)];}
-        }else{throw new Error("Unsupported shape");}return item;
+        }else{throw new Error("Unsupported shape");}
+        });
     }
     /** Render primitives and metadata; previous data selects Refresh semantics. Restore host state on error. */
     function generate(doc, result, settings, sources, previous) {
@@ -67,19 +87,28 @@ LG.hostDraw = (function () {
             for (i = root.layers.length - 1; i >= 0; i -= 1) { if (root.layers[i].name !== "LG Manual") { root.layers[i].locked = false; root.layers[i].remove(); } }
             for (i = doc.layers.length - 1; i >= 0; i -= 1) { if (doc.layers[i].name === "Logo Guides BG") { doc.layers[i].locked = false; doc.layers[i].remove(); } }
             if(used.background){bg=doc.layers.add();bg.name="Logo Guides BG";bg.zOrder(ZOrderMethod.SENDTOBACK);layers.background=bg;}
-            for (i = order.length - 1; i >= 0; i -= 1) { key = order[i]; if (used[key]) { layers[key] = root.layers.add(); layers[key].name = names[key]; } }
+            for (i = order.length - 1; i >= 0; i -= 1) { key = order[i]; if (used[key]) { layers[key] = root.layers.add(); layers[key].name = names[key]; layers[key].locked = false; layers[key].visible = true; } }
+            // Flush removed/recreated native layers before creating new page items.
+            if(typeof app.redraw==="function"){app.redraw();}
             for (i = 0; i < result.render.primitives.length; i += 1) {
                 primitive = result.render.primitives[i];
+                // Illustrator creation APIs can reject writes through a non-active layer.
+                // The source active layer is restored by the existing finally block.
+                var targetLayer=layers[primitive.layer]||layers.snapGuides;
+                if(targetLayer&&doc.activeLayer!==targetLayer){doc.activeLayer=targetLayer;}
                 if (primitive.type === "label") { label(layers[primitive.layer], primitive, result.render, styles, settings, doc); }
                 else if(primitive.type==="polygon"||primitive.layer==="legend"){item=shape(layers[primitive.layer],primitive);item.name=primitive.featureId;style(item,styles[primitive.style],result.render.strokeUnit,doc);}
                 else {
                     if (settings.output !== "guides") { item = shape(layers[primitive.layer],primitive); item.name = primitive.featureId; style(item, styles[primitive.style], result.render.strokeUnit, doc); }
-                    if (settings.output !== "styled") { item = shape(layers.snapGuides,primitive); item.name = primitive.featureId; item.filled = false; item.stroked = false; item.guides = true; }
+                    if (settings.output !== "styled") { doc.activeLayer=layers.snapGuides; item = shape(layers.snapGuides,primitive); item.name = primitive.featureId; item.filled = false; item.stroked = false; item.guides = true; }
                 }
             }
             if(previous){data=U.clone(previous);data.updatedAt=LG.hostStore.timestamp();if(!data.baseUnit.locked){data.baseUnit={value:result.analysis.baseUnit.value,source:result.analysis.baseUnit.source,locked:false};}}
             else{data=LG.hostStore.createData(result.analysis,settings);}LG.hostStore.write(root,data);if(!previous){LG.hostStore.tagSources(doc,sources,data.runId);}completed=true;
             return data;
+        } catch (drawError) {
+            if(primitive&&layers[primitive.layer]){var failedLayer=layers[primitive.layer];LG.hostEnv.log("Draw failure: "+primitive.featureId+"/"+primitive.type+"; layer="+failedLayer.name+"; locked="+failedLayer.locked+"; visible="+failedLayer.visible+"; rootLocked="+root.locked);}
+            throw drawError;
         } finally {
             try { if(!completed){LG.hostStore.restoreLocks(doc,locks);}root.locked = completed ? settings.lockLayer : wasLocked;if(bg){bg.locked=completed?settings.lockLayer:false;} }
             finally { try { LG.hostStore.restoreActiveLayer(doc,savedLayer); } finally { LG.hostStore.restoreSelection(doc,completed ? sources : savedSelection); } }
@@ -140,8 +169,8 @@ LG.hostManual = (function () {
         var data=LG.hostStore.read(doc);var a=data&&data.baseUnit&&data.baseUnit.value;var maxErr=0;
         LG.util.each(chosen.anchors,function(p){maxErr=Math.max(maxErr,Math.abs(LG.vec.distance(p.p,[c.cx,c.cy])-c.r));});
         var cfg=LG.config.resolve(settings);var fs=settings.fontSize||LG.util.clamp(cfg.fontSizeRel*2*c.r,6,36);var id="manual_"+LG.hostStore.runId();
-        var text="R "+(a>0?LG.ratios.measure(c.r,a,cfg).display:LG.ratios.number(c.r,2)+"pt");
-        draw(doc,[{type:"circle",c:[c.cx,c.cy],r:c.r,style:"circleFitted",featureId:id},LG.primitives.label([c.cx+(c.r+fs)/Math.sqrt(2),c.cy+(c.r+fs)/Math.sqrt(2)],0,[{text:text,sizeFactor:1,style:"text"},{text:(settings.uiLanguage==="en"?"Selected anchors max error: ":"选中点最大偏差：")+LG.ratios.number(maxErr,2)+"pt",sizeFactor:0.75,style:"textWarn"}],id)],settings,fs,LG.util.clamp(cfg.strokeUnitRel*2*c.r,0.25,2));
+        var text="R "+(a>0?LG.ratios.valueText(Math.round(c.r/a/settings.labelPrecision)*settings.labelPrecision,false,cfg):LG.ratios.number(c.r,settings.labelDecimals)+"pt");
+        draw(doc,[{type:"circle",c:[c.cx,c.cy],r:c.r,style:"circleFitted",featureId:id},LG.primitives.label([c.cx+(c.r+fs)/Math.sqrt(2),c.cy+(c.r+fs)/Math.sqrt(2)],0,[{text:text,sizeFactor:1,style:"text"},{text:(settings.uiLanguage==="en"?"Selected anchors max error: ":"选中点最大偏差：")+LG.ratios.number(maxErr,settings.labelDecimals)+"pt",sizeFactor:0.75,style:"textWarn"}],id)],settings,fs,LG.util.clamp(cfg.strokeUnitRel*2*c.r,0.25,2));
         return {circle:c,maxAnchorError:maxErr,anchorCount:chosen.anchors.length,sampleCount:chosen.samples.length};
     }
     return {selected:selected,draw:draw,circle:circle};

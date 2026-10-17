@@ -20,7 +20,7 @@ LG.primitives = (function () {
         function polygon(points,style,layer,id){out.push({type:"polygon",points:points,closed:true,style:style,layer:layer,featureId:id});}
         function rectangle(box,style,layer,id){polygon([[box[0],box[1]],[box[2],box[1]],[box[2],box[3]],[box[0],box[3]]],style,layer,id);}
         function deviated(m){return m.target!==null&&(m.severity==="warn"||m.severity==="bad");}
-        if(s.features.targetLines){
+        if(s.features.targetLines&&s.measurementLabelMode!=="measured"){
             function ai(f){return model.aiTargets&&model.aiTargets["$"+f.id];}
             function widthTarget(stem){if(!ai(stem)&&!deviated(stem.measure)){return;}var T=LG.angles.direction(stem.angleDeg);var N=[-T[1],T[0]];var lo=Infinity;var hi=-Infinity;var offset=V.dot(stem.mid,N);U.each(stem.fragments,function(f){U.each(f.edgeA.concat(f.edgeB),function(p){var t=V.dot(p,T);lo=Math.min(lo,t);hi=Math.max(hi,t);});});if(stem.kind!=="diagonal"){lo-=0.5*fs;hi+=0.5*fs;}U.each([-1,1],function(sign){var n=offset+sign*stem.measure.target*unit.value/2;segment(V.add(V.scale(T,lo),V.scale(N,n)),V.add(V.scale(T,hi),V.scale(N,n)),"target","targets",stem.id);});}
             if(s.features.stemWidths){U.each(model.stems,widthTarget);}
@@ -31,7 +31,7 @@ LG.primitives = (function () {
             if(s.features.circles){U.each(model.circles,function(c){if(ai(c)){out.push({type:"circle",c:[c.cx,c.cy],r:c.measureR.target*unit.value,style:"target",layer:"targets",featureId:c.id});}});}
             if(s.features.ringThickness){U.each(model.rings,function(r){if(!ai(r)){return;}var inner=null;U.each(model.circles,function(c){if(c.id===r.innerId){inner=c;}});if(inner){out.push({type:"circle",c:[inner.cx,inner.cy],r:inner.r+r.measure.target*unit.value,style:"target",layer:"targets",featureId:r.id});}});}
         }
-        if(s.features.clearSpace){var d=s.clearSpaceFactor*unit.value;var b=model.bbox;rectangle([b[0]-d,b[1]+d,b[2]+d,b[3]-d],"clearFrame","clearSpace","clearSpace");U.each([[b[0]-d,b[1]+d],[b[2],b[1]+d],[b[0]-d,b[3]],[b[2],b[3]]],function(p){rectangle([p[0],p[1],p[0]+d,p[1]-d],"clearSquare","clearSpace","clearSpace");var l=label([p[0]+d/2,p[1]-d/2],0,[{text:LG.ratios.display(s.clearSpaceFactor),sizeFactor:1,style:"text"}],"clearSpace");l.layer="clearSpace";out.push(l);});}
+        if(s.features.clearSpace){var d=s.clearSpaceFactor*unit.value;var b=model.bbox;rectangle([b[0]-d,b[1]+d,b[2]+d,b[3]-d],"clearFrame","clearSpace","clearSpace");U.each([[b[0]-d,b[1]+d],[b[2],b[1]+d],[b[0]-d,b[3]],[b[2],b[3]]],function(p){rectangle([p[0],p[1],p[0]+d,p[1]-d],"clearSquare","clearSpace","clearSpace");var l=label([p[0]+d/2,p[1]-d/2],0,[{text:LG.ratios.valueText(s.clearSpaceFactor,false,cfg),sizeFactor:1,style:"text"}],"clearSpace");l.layer="clearSpace";out.push(l);});}
         LG.layout.avoid(model,render);out=render.primitives;
         // A0 includes all non-legend labels, including optional corner labels.
         var area=render.guideArea;var labelBoxes=[];U.each(out,function(p){if(p.type==="label"){var box=LG.layout.labelBounds(p,fs);labelBoxes.push(box);area=U.union(area,[box[0]-fs,box[1]+fs,box[2]+fs,box[3]-fs]);}});

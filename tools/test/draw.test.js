@@ -12,6 +12,17 @@ const ROOT=path.resolve(__dirname,'../..');
 
 const {harness}=require('./host_harness');
 
+test('transient native helper creation removes its partial item and retries only once',()=>{
+ const {LG,context,artwork,doc}=harness();let redraws=0;context.app.redraw=()=>{redraws++;};
+ const add=artwork.pathItems.add;let attempts=0;artwork.pathItems.add=()=>{const p=add();const set=p.setEntirePath;p.setEntirePath=points=>{attempts++;if(attempts===1)throw Error("1346458189 ('PARM')");set.call(p,points);};return p;};
+ const count=artwork.pathItems.length;const shape=LG.hostDraw.shape(artwork,{type:'line',p0:[0,0],p1:[1,1]});assert.equal(attempts,2);assert.equal(redraws,1);assert.equal(artwork.pathItems.length,count+1);assert.ok(doc.pageItems.includes(shape));
+ attempts=0;const arc=LG.hostDraw.shape(artwork,{type:'arc',c:[0,0],r:10,startDeg:0,endDeg:180});assert.equal(arc.pathPoints.length,3);assert.equal(redraws,2);
+ const groups=artwork.groupItems.add;let textAttempts=0;artwork.groupItems.add=()=>{const g=groups();const create=g.textFrames.add;g.textFrames.add=()=>{textAttempts++;if(textAttempts===1)throw Error('Target layer cannot be modified');return create();};return g;};
+ const s=LG.config.defaults();LG.hostDraw.label(artwork,LG.primitives.label([0,0],0,[{text:'◇ 1.23a',style:'text',sizeFactor:1}],'S1'),{fontSize:4},LG.styles.preset('light'),s,doc);assert.equal(textAttempts,2);assert.equal(artwork.groupItems.length,1);assert.equal(redraws,3);
+ artwork.pathItems.add=()=>{const p=add();p.setEntirePath=()=>{throw Error("PARM");};return p;};assert.throws(()=>LG.hostDraw.shape(artwork,{type:'line',p0:[0,0],p1:[1,1]}),/PARM/);assert.equal(redraws,4);assert.equal(artwork.pathItems.length,count+2);
+ artwork.pathItems.add=add;const ellipse=artwork.pathItems.ellipse;let ellipseAttempts=0;artwork.pathItems.ellipse=(...args)=>{ellipseAttempts++;if(ellipseAttempts===1)throw Error('Target layer cannot be modified');return ellipse(...args);};const circle=LG.hostDraw.shape(artwork,{type:'circle',c:[0,0],r:10});assert.equal(ellipseAttempts,2);assert.equal(circle.locked,false);assert.equal(circle.hidden,false);assert.equal(redraws,5);
+});
+
 test('Generate draws references, stores hidden Doc Data, tags sources, locks layer and restores activeLayer/selection',()=>{
   const {LG,plain,doc,artwork}=harness();const sources=doc.selection;const settings=LG.config.defaults();const result=LG.analyze(F3(),{features:{stemWidths:false,gaps:false}});
   const data=plain(LG.hostDraw.generate(doc,result,settings,sources));

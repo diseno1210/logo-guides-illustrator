@@ -163,11 +163,29 @@
         const projected=LG.panelModel.project(result,state.settings,descriptors,false);
         const output=await call('draw',{mode:'sources',readToken:input.readToken,settings:state.settings,result:projected.result,hiddenFeatures:descriptors});
         state.result=projected.result;state.features=features;state.hidden=descriptors;state.docData=output.docData;state.curated=false;
-        session.fullResult=result;state.ai.pending=null;state.status='AI 建议已应用 · '+output.primitives+' 图元';
+        session.fullResult=result;session.targets=suggestion.targets;session.runId=output.docData.runId;state.ai.pending=null;state.status='AI 建议已应用 · '+output.primitives+' 图元';
         return {result:projected.result,output};
       });
     }
-    return {state:state,init:init,run:run,measure:measure,base:base,visible:visible,select:select,clear:clear,dump:dump,requestAI:requestAI,applyAI:applyAI};
+    async function labels(mode) {
+      return task(async function(){
+        const captured=session;await sameSession(captured);
+        const settings=LG.config.resolve({...state.settings,measurementLabelMode:mode}).settings;
+        const input=await call('read',{mode:'sources',settings:settings,documentToken:state.documentToken});
+        if(input.documentToken!==state.documentToken || JSON.stringify(input.geometry)!==captured.geometry || !input.docData || input.docData.runId!==captured.runId || JSON.stringify(input.docData.baseUnit)!==captured.baseUnit)throw new Error('来源几何或基准单位已改变，请刷新后切换标注');
+        const context=LG.preAnalyze(input.geometry,settings);context.targetOverrides=captured.targets||[];
+        const result=LG.analyze(input.geometry,settings,context);const features=LG.panelModel.catalog(result.analysis);
+        const hidden=LG.panelModel.match(input.docData.hiddenFeatures||[],features,settings,result.analysis.S);
+        const projected=LG.panelModel.project(result,settings,hidden,state.curated);
+        const output=await call('draw',{mode:'sources',readToken:input.readToken,settings:settings,result:projected.result,hiddenFeatures:hidden});
+        state.settings=settings;state.result=projected.result;state.features=features.filter(f=>projected.allowed['$'+f.id]);state.hidden=hidden;state.docData=output.docData;
+        state.warnings=result.analysis.warnings;state.ai.pending=null;
+        session={...captured,settings:JSON.stringify(settings),runId:output.docData.runId,fullResult:result};
+        state.status=mode==='measured'?'已切换 · 仅用 ◇ 实际测量标注，目标图元已隐藏':'已恢复目标对照 · ◇ 标识从原图测得的值';
+        return {result:projected.result,output};
+      });
+    }
+    return {state:state,init:init,run:run,measure:measure,base:base,visible:visible,select:select,clear:clear,dump:dump,requestAI:requestAI,applyAI:applyAI,labels:labels};
   }
   root.LGPanel = {bridge:bridge,create:create};
 }(this));
