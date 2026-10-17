@@ -45,8 +45,8 @@
     if(!baseEditing)$('baseValue').value=s.settings.baseUnit.value||s.docData&&s.docData.baseUnit.value||'';
     $('baseLock').checked=s.settings.baseUnit.locked;
     const cfg=LG.config.resolve(s.settings);$('circleFit').value=cfg.circleFitTol;$('fitValue').textContent=(100*cfg.circleFitTol).toFixed(2)+'%';
-    document.body.classList.toggle('light',s.settings.stylePreset==='light');
-    document.querySelectorAll('button,input,select').forEach(el=>el.disabled=s.busy);
+    document.body.classList.toggle('busy',s.busy);
+    document.querySelectorAll('button:not([role="tab"]),input,select').forEach(el=>el.disabled=s.busy);
     $('circleExtend').disabled=s.busy||s.settings.circleDisplay!=='extended';
     $('measuredLabels').disabled=s.busy||!s.result||s.settings.measurementLabelMode==='measured';
     $('compareLabels').disabled=s.busy||!s.result||s.settings.measurementLabelMode==='compare';
@@ -60,6 +60,8 @@
     $('candidates').textContent='';s.candidates.forEach(c=>button('candidates',c.value.toFixed(3)+' pt · '+c.count+' 处',()=>controller.base(c.value,$('baseLock').checked)));
     $('measurements').textContent='';s.measurements.filter(m=>m.value>0).forEach(m=>button('measurements',m.zh+' '+m.value.toFixed(3)+' pt',()=>controller.base(m.value,$('baseLock').checked)));
     $('warnings').textContent=(s.warnings||[]).map(w=>w.code+': '+w.message).join('\n');
+    $('tab-features').textContent='特征 '+s.features.length;
+    $('tab-ai').textContent=s.ai.pending?'AI •':'AI';
     renderList(s);
   }
   function renderList(s) {
@@ -69,6 +71,22 @@
     if(!sorted.length){const p=document.createElement('p');p.className='muted';p.textContent='生成或刷新后显示特征。';list.appendChild(p);}
     sorted.forEach(function(f){const group=$('view').value==='severity'?f.severity:f.type;if(group!==last){const h=document.createElement('div');h.className='feature-group';h.textContent=types[group]||({bad: "偏差较大",warn: "存在偏差",ok: "在容差内",none: "无目标"}[group])||group;list.appendChild(h);last=group;}const row=document.createElement('div');row.className='feature';const check=document.createElement('input');check.type='checkbox';check.checked=!hidden['$'+f.id];check.disabled=s.busy;check.setAttribute('aria-label','显示 '+f.id);check.addEventListener('change',()=>action(async()=>{await controller.visible(f.id,check.checked);await controller.run('sources');}));const b=document.createElement('button');b.disabled=s.busy;b.textContent=(types[f.type]||f.type)+' '+f.id+' · '+(f.measure?LG.ratios.labelLines(f.measure,LG.config.resolve(s.settings))[0].text:(f.display||''));b.title='在 Illustrator 中选中';b.addEventListener('click',()=>action(()=>controller.select(f.id)));const dev=document.createElement('span');dev.className='dev '+f.severity;dev.textContent=deviation(f,s.settings.labelDecimals);dev.title='相对目标的偏差；角度用度，其余用百分比';row.append(check,b,dev);list.appendChild(row);});
   }
+  // Navigation also works in a plain browser, before the CEP-only bootstrap.
+  const tabs=Array.from(document.querySelectorAll('[role="tab"]'));
+  function activateTab(tab) {
+    tabs.forEach(item=>{const active=item===tab;item.setAttribute('aria-selected',String(active));item.tabIndex=active?0:-1;$(item.getAttribute('aria-controls')).hidden=!active;});
+  }
+  tabs.forEach((tab,index)=>{
+    tab.addEventListener('click',()=>activateTab(tab));
+    tab.addEventListener('keydown',event=>{
+      let next;
+      if(event.key==='ArrowRight')next=(index+1)%tabs.length;
+      else if(event.key==='ArrowLeft')next=(index+tabs.length-1)%tabs.length;
+      else if(event.key==='Home')next=0;
+      else if(event.key==='End')next=tabs.length-1;
+      if(next!==undefined){event.preventDefault();activateTab(tabs[next]);tabs[next].focus();}
+    });
+  });
   try {
     if(!window.__adobe_cep__)throw new Error('请在 Illustrator 的「窗口 → 扩展」中打开此面板。');
     controller=LGPanel.create(LG,LGPanel.bridge(new CSInterface()),sync,null,LGPanelAI);

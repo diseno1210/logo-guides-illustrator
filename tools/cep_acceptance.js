@@ -33,7 +33,10 @@ async function run(folder) {
     await check('visible feature actual native selection',async()=>panel('const c=logoGuidesPanel;const f=c.state.features.find(f=>f.type==="line");const r=await c.select(f.id);if(!r.selected)throw Error("Native selected count is zero: "+JSON.stringify(r));return r;'));
     await check('hide, refresh geometry match, show',async()=>panel('const c=logoGuidesPanel;const f=c.state.features.find(f=>f.type==="line");await c.visible(f.id,false);await c.run("sources");if(!c.state.hidden.length)throw Error("Hidden match lost");await c.visible(c.state.hidden[0].id,true);return {hidden:c.state.hidden.length};'));
     await check('manual a and automatic a',async()=>panel('const c=logoGuidesPanel;await c.base(10,true);if(c.state.docData.baseUnit.value!==10||!c.state.docData.baseUnit.locked)throw Error("Manual a lost");await c.base(null,false);if(c.state.docData.baseUnit.locked)throw Error("Automatic a locked");return c.state.docData.baseUnit;'));
-    await check('style and curated refresh, geometry dump',async()=>panel('const c=logoGuidesPanel;c.state.settings.stylePreset="light";c.state.curated=true;await c.run("sources");const dump=JSON.parse(await c.dump());if(!dump.parts.length||!document.body.classList.contains("light"))throw Error("Style or dump failed");return {parts:dump.parts.length,features:c.state.features.length};'));
+    await check('style and curated refresh, geometry dump',async()=>{const result=await panel('const c=logoGuidesPanel;c.state.settings.stylePreset="light";c.state.curated=true;await c.run("sources");const dump=JSON.parse(await c.dump());if(!dump.parts.length||document.body.classList.contains("light")||c.state.settings.stylePreset!=="light")throw Error("Style or dump failed");return {parts:dump.parts.length,features:c.state.features.length};');
+      const native=await host('(function(){var n=0;var d=app.activeDocument;for(var i=0;i<d.pathItems.length;i++){var p=d.pathItems[i];if(p.parent.name==="LG Visual Lines"&&p.stroked){var c=p.strokeColor;if(c.red!==163||c.green!==116||c.blue!==95)throw Error("Light drawing mismatch");n++;}}return String(n);}())');
+      if(!(Number(native)>0))throw Error('Native light lines: '+native);return {...result,lightLines:Number(native)};
+    });
     await check('switched native document rejects delayed refresh and clear',async()=>{
       const created=await host('var LG_CEP_OTHER=app.documents.add(DocumentColorSpace.RGB,300,300);"ready";');if(created!=='ready')throw Error(created);
       try{return await panel('const c=logoGuidesPanel;let rejected=0;for(const action of [()=>c.run("sources"),()=>c.clear("data"),()=>c.base(15,true)]){try{await action();}catch(error){if(!/文档已切换/.test(error.message))throw error;rejected++;}}if(rejected!==3)throw Error("Cross-document operation was accepted");return {rejected};');}
@@ -43,8 +46,10 @@ async function run(folder) {
       const result=await panel('document.getElementById("measure").click();'+settle+'const c=logoGuidesPanel;if(!c.state.candidates.length)throw Error("Candidates missing");const checkbox=document.querySelector("#featureList input");checkbox.click();'+settle+'if(!c.state.hidden.length)throw Error("UI hide failed");document.querySelector("#featureList input:not(:checked)").click();'+settle+'document.querySelector("#featureList .feature button").click();'+settle+'const style=document.getElementById("setting-stylePreset");style.value="dark";style.dispatchEvent(new Event("change"));'+settle+'const fit=document.getElementById("circleFit");fit.value="0.025";fit.dispatchEvent(new Event("input"));'+settle+'if(c.state.settings.advanced.circleFitTol!==0.025)throw Error("Slider failed");document.getElementById("curated").click();'+settle+'document.getElementById("dump").click();'+settle+'return {candidates:c.state.candidates.length,status:document.getElementById("status").textContent};');
       const dump=JSON.parse(fs.readFileSync(dumpFile,'utf8'));if(dump.parts.length!==2)throw new Error('UI dump file mismatch');return result;
     });
-    await client.evaluate('window.scrollTo(0,0)');const metrics=await client.send('Page.getLayoutMetrics');
-    const shot=await client.send('Page.captureScreenshot',{format:'png',captureBeyondViewport:true,clip:{x:0,y:0,width:metrics.contentSize.width,height:metrics.contentSize.height,scale:1}});fs.writeFileSync(path.join(folder,'panel.png'),Buffer.from(shot.data,'base64'));
+    for(const tab of ['parameters','appearance','features','ai']){
+      await client.evaluate('document.querySelector("[data-tab='+tab+']").click()');
+      const shot=await client.send('Page.captureScreenshot',{format:'png'});fs.writeFileSync(path.join(folder,'panel-'+tab+'.png'),Buffer.from(shot.data,'base64'));
+    }
     for(const mode of ['auto','all','data'])await check('clear UI '+mode,async()=>panel('const c=logoGuidesPanel;document.querySelector("[data-clear='+mode+']").click();'+settle+(mode==='data'?'':'await c.run("sources");')+'return {status:c.state.status,hasData:!!c.state.docData};'));
     await cleanup();
     await check('F10 native fixture setup',async()=>{const r=await host(setup(fixtures.F10()));if(r!=='ready')throw new Error(r);return r;});
@@ -54,6 +59,7 @@ async function run(folder) {
   finally {
     try{await cleanup();}catch(error){report.cleanupError=error.message;report.status='fail';}
     if(previous!==null)fs.writeFileSync(settingsFile,previous);else if(fs.existsSync(settingsFile))fs.unlinkSync(settingsFile);
+    try{await panel('await logoGuidesPanel.init();');}catch(error){report.restoreError=error.message;report.status='fail';}
     if(previousDump!==null)fs.writeFileSync(dumpFile,previousDump);else if(fs.existsSync(dumpFile))fs.unlinkSync(dumpFile);
     fs.writeFileSync(path.join(folder,'results.json'),JSON.stringify(report,null,2)+'\n');client.close();
   }

@@ -46,7 +46,7 @@ async function run(folder,live=false){
    const native=JSON.parse(await host('(function(){var n=0,h=0,d=app.activeDocument;for(var i=0;i<d.pageItems.length;i++){var p=d.pageItems[i];if(p.parent.typename==="Layer"&&p.parent.name==="LG Targets"){n+=1;}if(p.hidden){h+=1;}}return "{\\"targets\\":"+n+",\\"hidden\\":"+h+"}";}())'));
    if(native.targets!==result.targetPrimitives)throw Error('Native target count mismatch');return {...result,native};
   });
-  await panel('document.getElementById("aiSettings").open=false;document.getElementById("aiRequest").scrollIntoView({block:"center"});');
+  await panel('document.querySelector("[data-tab=ai]").click();document.getElementById("aiSettings").open=false;document.getElementById("aiRequest").scrollIntoView({block:"center"});');
   const shot=await client.send('Page.captureScreenshot',{format:'png'});fs.writeFileSync(path.join(folder,'panel.png'),Buffer.from(shot.data,'base64'));
   if(!live){
    await check('real refresh removes session target overrides',async()=>panel('const c=logoGuidesPanel;await c.run("sources");if(c.state.result.render.primitives.some(p=>p.layer==="targets") || c.state.ai.notes)throw Error("Old targets retained");return {targets:0};'));
