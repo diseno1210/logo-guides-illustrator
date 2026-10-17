@@ -11,7 +11,13 @@
   const checks=[['detectSpecialRatios','识别 φ、√2'],['lockLayer','锁定辅助图层']];
   const features=[['baselines','基准线'],['overshoot','视觉超出'],['verticals','竖直参考线'],['stemWidths','笔画宽度'],['gaps','间距'],['heights','高度'],['counters','字怀'],['circles','辅助圆'],['ringThickness','环厚度'],['angles','角度'],['constructionLines','构造线'],['targetLines','目标线'],['deviationMarkers','偏差标记'],['clearSpace','安全区'],['legend','图例']];
   const types={line:'参考线',construction:'构造线',circle:'辅助圆',stem:'笔画',gap:'间距',angle:'角度',height:'高度',counter:'字怀',ring:'环厚度'};
-  let controller; let timer; let baseEditing=false; let aiStore;
+  let controller; let timer; let baseEditing=false; let aiStore; let openAIBaseUrl='';
+  function providerFields(remember) {
+    const anthropic=$('aiProvider').value==='anthropic';
+    if(anthropic && remember)openAIBaseUrl=$('aiBaseUrl').value;
+    $('aiBaseUrl').value=anthropic?'https://api.anthropic.com/v1':openAIBaseUrl;
+    $('aiBaseUrl').readOnly=anthropic;
+  }
   function aiConfig(){return {provider:$('aiProvider').value,baseUrl:$('aiBaseUrl').value,model:$('aiModel').value,apiKey:$('aiKey').value};}
   function report(error) { $('status').textContent=error.message||String(error); $('status').classList.add('error'); }
   function action(fn) { clearTimeout(timer); return Promise.resolve().then(fn).catch(report); }
@@ -92,6 +98,8 @@
     controller=LGPanel.create(LG,LGPanel.bridge(new CSInterface()),sync,null,LGPanelAI);
     aiStore=LGPanelAI.storage(require('path').join(new CSInterface().getSystemPath(SystemPath.USER_DATA),'LogoGuides'));
     try{const c=aiStore.load();$('aiProvider').value=c.provider;$('aiBaseUrl').value=c.baseUrl;$('aiModel').value=c.model;$('aiKey').value=c.apiKey;}catch(error){$('aiConfigStatus').textContent=error.message;}
+    if($('aiProvider').value==='openai')openAIBaseUrl=$('aiBaseUrl').value;
+    providerFields(false);
     window.logoGuidesPanel=controller;
     $('connect').onclick=()=>action(()=>controller.init());
     $('generate').onclick=()=>action(()=>controller.run('selection'));
@@ -114,7 +122,7 @@
     $('curated').onchange=function(){controller.state.curated=this.checked;schedule();};
     $('view').onchange=()=>renderList(controller.state);
     $('aiGoal').onchange=()=>sync(controller.state);
-    $('aiProvider').onchange=()=>{if($('aiProvider').value==='anthropic')$('aiBaseUrl').value='https://api.anthropic.com/v1';};
+    $('aiProvider').onchange=()=>providerFields(true);
     $('aiSave').onclick=()=>action(()=>{aiStore.save(aiConfig());$('aiConfigStatus').textContent='已保存本机配置（明文）';});
     $('aiRequest').onclick=()=>action(()=>controller.requestAI(aiConfig(),$('aiGoal').value));
     $('aiApply').onclick=()=>action(()=>controller.applyAI());
