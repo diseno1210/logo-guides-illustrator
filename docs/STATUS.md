@@ -58,8 +58,8 @@ M0–M8已满足各自门槛。当前交付v0.3.0，M9签名安装进行中。M9
 
 - 实施计划见[ M9实施计划](implementation/M9.md)，验收表见[ M9验收](acceptance/M9.md)。发布工具为`tools/release.js`与受限ZIP校验`tools/zxp.js`，只使用Node内置模块，不新增依赖。
 - 已核对Adobe官方[ZXPSignCmd 4.1.3](https://github.com/Adobe-CEP/CEP-Resources/tree/master/ZXPSignCMD/4.1.3)；Windows x64工具SHA256：`ffc2223167225ce61d024eb463fc5ad1a1be16133f99ef334a646f7311916c98`。独立探针完成自签名、签名、`-verify`和`-certInfo`，证书信息显示`Timestamp: None`，仅作工具链验证。
-- 自动验证：M9专项4项通过；全回归需在提交前重跑，构建和9份ES3产物通过。签名发布工具拒绝意外文件、符号链接、敏感配置、版本不一致、不安全时间戳URL及不完整ZIP，并核对ZXP内容与构建字节。
-- 已生成本机v0.3.0 Windows预验包（`dist/releases/logo-guides-0.3.0-win32/`），`release.json`记录源提交、工具/证书hash、包hash、文件清单与`pending-clean-machine`。曾尝试DigiCert时间戳但官方工具失败；未带时间戳包签名验证成功。dist被git忽略，最终交付包须从已提交干净源码重打。
+- 自动验证：M9专项4项通过；全量`node tools/run_tests.js` 190/190通过，0失败/跳过/todo；`node tools/build.js`和`node tools/check_es3.js`通过，9份ES3产物。签名发布工具拒绝意外文件、符号链接、敏感配置、版本不一致、不安全时间戳URL及不完整ZIP，并核对ZXP内容与构建字节。
+- 已从干净提交生成本机v0.3.0 Windows预验包（`dist/releases/logo-guides-0.3.0-win32-clean/`），`sourceDirty:false`。ZXPSignCmd `-verify`成功；`release.json`记录源提交、工具/证书hash、归档清单、证书状态和`pending-clean-machine`，其中的ZXP SHA256是交付目录的复核值。时间戳服务尝试失败，因此制品无时间戳，证书检查跳过在线吊销查询；不宣称长期有效或证书可信。
 - 待完成：带时间戳签名包（若服务可用）、干净Windows机器按安装文档安装/重启/生成/刷新/卸载/回退。未完成前不更新到v1.0、不创建tag或GitHub Release。
 
 ## M1 真实 Illustrator 验证（2026-10-16）
