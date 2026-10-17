@@ -12,7 +12,10 @@
     "check:es3": "node tools/check_es3.js",
     "preview": "node tools/preview.js",
     "fixture": "node tools/run_fixture.js",
-    "validate:geometry": "node tools/validate_geometry.js"
+    "validate:geometry": "node tools/validate_geometry.js",
+    "release:cert": "node tools/release.js cert",
+    "release:pack": "node tools/release.js pack",
+    "release:verify": "node tools/release.js verify"
   },
   "devDependencies": {
     "@xmldom/xmldom": "0.9.12",

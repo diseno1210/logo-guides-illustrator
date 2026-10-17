@@ -15,6 +15,7 @@ coverage/
 *.pfx
 *.keystore
 *.jks
+.rnd
 ai.json
 ai.json.tmp
 .DS_Store

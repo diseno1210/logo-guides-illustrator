@@ -13,7 +13,7 @@
 | M6 | 已验收 | `6da8b2a`实现、`c4784b0`原生修复；154项测试、6份ASCII/ES3脚本、18项原生DOM、真实窗口/撤销与用户拖动均通过；v0.1.0 |
 | M7 | 已验收 | v0.2.0；171项测试、9份ES3产物通过；真实CEP F10刷新1092ms/101图元，F9原生图元误差≤3.56e-13；14项CEP检查通过，证据见acceptance/M7.md |
 | M8 | 已验收 | v0.3.0；186项测试、9份ES3通过；6项真实CEP模拟响应检查、一次AtlasCloud真实AI请求及原生应用通过，来源Geometry不变，见acceptance/M8.md |
-| M9 | 未开始 | 依赖 M8 与干净机器安装验证 |
+| M9 | 进行中 | 已核对Adobe ZXPSignCmd 4.1.3并实现签名/清单校验工具；项目ZXP与干净机器安装待执行，暂不发布v1.0 |
 
 ## 原始输入
 
@@ -52,7 +52,15 @@
 
 ## 当前限制与下一步
 
-M0–M7已满足各自门槛。当前交付v0.2.0，M8 AI和M9签名安装尚未实现。M7已完成实际CEP UI、桥接、特征选中/显隐与2000锚点性能实测；Notion日志与GitHub随阶段更新。
+M0–M8已满足各自门槛。当前交付v0.3.0，M9签名安装进行中。M9已核对官方ZXPSignCmd并实现本机预验工具；项目签名包和干净机器安装尚未完成，不发布v1.0。
+
+## M9 实施与预验（2026-10-17）
+
+- 实施计划见[ M9实施计划](implementation/M9.md)，验收表见[ M9验收](acceptance/M9.md)。发布工具为`tools/release.js`与受限ZIP校验`tools/zxp.js`，只使用Node内置模块，不新增依赖。
+- 已核对Adobe官方[ZXPSignCmd 4.1.3](https://github.com/Adobe-CEP/CEP-Resources/tree/master/ZXPSignCMD/4.1.3)；Windows x64工具SHA256：`ffc2223167225ce61d024eb463fc5ad1a1be16133f99ef334a646f7311916c98`。独立探针完成自签名、签名、`-verify`和`-certInfo`，证书信息显示`Timestamp: None`，仅作工具链验证。
+- 自动验证：M9专项4项通过；全回归需在提交前重跑，构建和9份ES3产物通过。签名发布工具拒绝意外文件、符号链接、敏感配置、版本不一致、不安全时间戳URL及不完整ZIP，并核对ZXP内容与构建字节。
+- 已生成本机v0.3.0 Windows预验包（`dist/releases/logo-guides-0.3.0-win32/`），`release.json`记录源提交、工具/证书hash、包hash、文件清单与`pending-clean-machine`。曾尝试DigiCert时间戳但官方工具失败；未带时间戳包签名验证成功。dist被git忽略，最终交付包须从已提交干净源码重打。
+- 待完成：带时间戳签名包（若服务可用）、干净Windows机器按安装文档安装/重启/生成/刷新/卸载/回退。未完成前不更新到v1.0、不创建tag或GitHub Release。
 
 ## M1 真实 Illustrator 验证（2026-10-16）
 
